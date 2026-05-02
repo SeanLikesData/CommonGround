@@ -180,12 +180,46 @@ export default function MapCanvas() {
           id: "sensors",
           type: "circle",
           source: "ao",
-          filter: ["==", ["get", "feature_type"], "sensor"],
+          filter: [
+            "all",
+            ["==", ["get", "feature_type"], "sensor"],
+            ["!=", ["get", "sensor_type"], "trail_cam"],
+          ],
           paint: {
             "circle-radius": 6,
             "circle-color": "#0f172a",
             "circle-stroke-color": layerColors.sensor,
             "circle-stroke-width": 2,
+          },
+        });
+
+        map.addLayer({
+          id: "trail-cams",
+          type: "circle",
+          source: "ao",
+          filter: [
+            "all",
+            ["==", ["get", "feature_type"], "sensor"],
+            ["==", ["get", "sensor_type"], "trail_cam"],
+          ],
+          paint: {
+            "circle-radius": 5,
+            "circle-color": "#0f172a",
+            "circle-stroke-color": layerColors.trailCam,
+            "circle-stroke-width": 2,
+          },
+        });
+
+        map.addLayer({
+          id: "patrol-loop",
+          type: "line",
+          source: "ao",
+          filter: ["==", ["get", "feature_type"], "patrol_loop"],
+          paint: {
+            "line-color": layerColors.patrolLoop,
+            "line-width": 2,
+            "line-opacity": 0.75,
+            "line-dasharray": [2, 2],
           },
         });
 
@@ -307,14 +341,16 @@ export default function MapCanvas() {
           const id = f.properties?.id as string;
           if (id) setSelection({ kind: "spot", id });
         });
-        map.on("click", "sensors", (e) => {
-          const f = e.features?.[0];
-          if (!f) return;
-          const id = f.properties?.label as string;
-          if (id) setSelection({ kind: "sensor", id });
-        });
+        for (const layerId of ["sensors", "trail-cams"]) {
+          map.on("click", layerId, (e) => {
+            const f = e.features?.[0];
+            if (!f) return;
+            const id = f.properties?.label as string;
+            if (id) setSelection({ kind: "sensor", id });
+          });
+        }
 
-        for (const id of ["spots-layer", "sensors"]) {
+        for (const id of ["spots-layer", "sensors", "trail-cams"]) {
           map.on("mouseenter", id, () => (map.getCanvas().style.cursor = "pointer"));
           map.on("mouseleave", id, () => (map.getCanvas().style.cursor = ""));
         }
@@ -398,11 +434,13 @@ export default function MapCanvas() {
       map.setLayoutProperty(id, "visibility", visible ? "visible" : "none");
     };
     setVis("sensors", visibleLayers.has("sensors"));
+    setVis("trail-cams", visibleLayers.has("sensors"));
     setVis("nai-fill", visibleLayers.has("nais"));
     setVis("nai-line", visibleLayers.has("nais"));
     setVis("drone-orbit", visibleLayers.has("drone-orbit"));
     setVis("spots-layer", visibleLayers.has("spots"));
     setVis("connections-layer", visibleLayers.has("alerts"));
+    setVis("patrol-loop", visibleLayers.has("inferred"));
   }, [visibleLayers, styleReady]);
 
   return (

@@ -56,4 +56,6 @@ export const layerColors = {
   drone: colors.orange,
   suspected: colors.magenta,
   sensor: "#f8fafc",
+  trailCam: "#fbbf24",
+  patrolLoop: colors.magenta,
 } as const;
