@@ -1,3 +1,5 @@
+import AlertFeed from "@/components/AlertFeed";
+import DetailPanel from "@/components/DetailPanel";
 import MapCanvas from "@/components/MapCanvas";
 import TimeBar from "@/components/TimeBar";
 import Watermark from "@/components/Watermark";
@@ -9,9 +11,11 @@ export default function App() {
   useTapePlayer(tape);
 
   return (
-    <div className="relative h-full w-full bg-zinc-950 text-zinc-100">
+    <div className="relative h-full w-full overflow-hidden bg-zinc-950 text-zinc-100">
       <MapCanvas />
       <Watermark />
+      <AlertFeed />
+      <DetailPanel />
       <TimeBar />
     </div>
   );

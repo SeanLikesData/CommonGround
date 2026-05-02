@@ -12,8 +12,9 @@ import {
   terrainSource,
 } from "@/lib/mapStyle";
 import { useMapStore } from "@/lib/store";
-import { colors } from "@/lib/symbology";
-import type { SpotEvent } from "@/lib/types";
+import { colors, severityColor } from "@/lib/symbology";
+import { setMapInstance } from "@/lib/mapInstance";
+import type { AlertEvent, SpotEvent } from "@/lib/types";
 
 const GEOJSON_URL = "/geojson/ao-lionheart.geojson";
 
@@ -33,14 +34,33 @@ function spotsToFeatureCollection(spots: SpotEvent[]) {
   };
 }
 
+function connectionsToFeatureCollection(alerts: AlertEvent[], spots: SpotEvent[]) {
+  const spotById = new Map(spots.map((s) => [s.id, s]));
+  const features: GeoJSON.Feature[] = [];
+  for (const a of alerts) {
+    for (const sid of a.contributingSpotIds) {
+      const s = spotById.get(sid);
+      if (!s) continue;
+      features.push({
+        type: "Feature",
+        properties: { alertId: a.id, severity: a.severity },
+        geometry: { type: "LineString", coordinates: [s.location, a.location] },
+      });
+    }
+  }
+  return { type: "FeatureCollection" as const, features };
+}
+
 export default function MapCanvas() {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const [styleReady, setStyleReady] = useState(false);
 
   const events = useMapStore((s) => s.events);
+  const alerts = useMapStore((s) => s.alerts);
   const setSelection = useMapStore((s) => s.setSelection);
   const visibleLayers = useMapStore((s) => s.visibleLayers);
+  const markersRef = useRef<Map<string, maplibregl.Marker>>(new Map());
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
@@ -56,6 +76,7 @@ export default function MapCanvas() {
     });
 
     mapRef.current = map;
+    setMapInstance(map);
 
     map.addControl(new maplibregl.NavigationControl({ showCompass: true }), "top-right");
     map.addControl(new maplibregl.ScaleControl({ unit: "metric" }), "bottom-right");
@@ -206,6 +227,23 @@ export default function MapCanvas() {
           },
         });
 
+        // Connection lines (alert ← contributing spots)
+        map.addSource("connections", {
+          type: "geojson",
+          data: { type: "FeatureCollection", features: [] },
+        });
+        map.addLayer({
+          id: "connections-layer",
+          type: "line",
+          source: "connections",
+          paint: {
+            "line-color": colors.cyan,
+            "line-width": 1.2,
+            "line-opacity": 0.45,
+            "line-dasharray": [1, 2],
+          },
+        });
+
         // Dynamic SPOT layer
         map.addSource("spots", {
           type: "geojson",
@@ -284,7 +322,11 @@ export default function MapCanvas() {
       }
     });
 
+    const markers = markersRef.current;
     return () => {
+      for (const m of markers.values()) m.remove();
+      markers.clear();
+      setMapInstance(null);
       map.remove();
       mapRef.current = null;
       setStyleReady(false);
@@ -301,6 +343,49 @@ export default function MapCanvas() {
     }
   }, [events, styleReady]);
 
+  // Update connection lines whenever alerts or events change.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !styleReady) return;
+    const src = map.getSource("connections");
+    if (src && "setData" in src) {
+      (src as maplibregl.GeoJSONSource).setData(
+        connectionsToFeatureCollection(alerts, events),
+      );
+    }
+  }, [alerts, events, styleReady]);
+
+  // Manage alert pulse markers as DOM elements.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !styleReady) return;
+
+    const seen = new Set<string>();
+    for (const a of alerts) {
+      seen.add(a.id);
+      if (markersRef.current.has(a.id)) continue;
+      const el = document.createElement("div");
+      el.className = "alert-pulse-marker";
+      el.style.setProperty("--alert-color", severityColor(a.severity));
+      el.style.cursor = "pointer";
+      el.style.pointerEvents = "auto";
+      el.addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        setSelection({ kind: "alert", id: a.id });
+      });
+      const marker = new maplibregl.Marker({ element: el, anchor: "center" })
+        .setLngLat(a.location)
+        .addTo(map);
+      markersRef.current.set(a.id, marker);
+    }
+    for (const [id, m] of markersRef.current) {
+      if (!seen.has(id)) {
+        m.remove();
+        markersRef.current.delete(id);
+      }
+    }
+  }, [alerts, styleReady, setSelection]);
+
   // Layer visibility.
   useEffect(() => {
     const map = mapRef.current;
@@ -314,6 +399,7 @@ export default function MapCanvas() {
     setVis("nai-line", visibleLayers.has("nais"));
     setVis("drone-orbit", visibleLayers.has("drone-orbit"));
     setVis("spots-layer", visibleLayers.has("spots"));
+    setVis("connections-layer", visibleLayers.has("alerts"));
   }, [visibleLayers, styleReady]);
 
   return <div ref={containerRef} className="absolute inset-0" />;
