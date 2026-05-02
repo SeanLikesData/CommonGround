@@ -405,5 +405,10 @@ export default function MapCanvas() {
     setVis("connections-layer", visibleLayers.has("alerts"));
   }, [visibleLayers, styleReady]);
 
-  return <div ref={containerRef} className="absolute inset-0" />;
+  return (
+    <div
+      ref={containerRef}
+      style={{ position: "absolute", inset: 0 }}
+    />
+  );
 }
