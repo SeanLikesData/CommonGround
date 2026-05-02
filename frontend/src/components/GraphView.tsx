@@ -35,6 +35,7 @@ export default function GraphView() {
   const alerts = useMapStore((s) => s.alerts);
   const memory = useMapStore((s) => s.memory);
   const setSelection = useMapStore((s) => s.setSelection);
+  const setView = useMapStore((s) => s.setView);
 
   const { nodes, edges, height } = useMemo(() => {
     const n: Node[] = [];
@@ -112,9 +113,16 @@ export default function GraphView() {
   }, [nodes]);
 
   const onNodeClick = (n: Node) => {
-    if (n.kind === "alert") setSelection({ kind: "alert", id: n.id.slice(6) });
-    else if (n.kind === "spot") setSelection({ kind: "spot", id: n.id.slice(5) });
-    else if (n.kind === "sensor") setSelection({ kind: "sensor", id: n.id.slice(7) });
+    if (n.kind === "alert") {
+      setView("live");
+      setSelection({ kind: "alert", id: n.id.slice(6) });
+    } else if (n.kind === "spot") {
+      setView("live");
+      setSelection({ kind: "spot", id: n.id.slice(5) });
+    } else if (n.kind === "sensor") {
+      setView("live");
+      setSelection({ kind: "sensor", id: n.id.slice(7) });
+    }
   };
 
   return (

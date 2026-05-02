@@ -65,15 +65,22 @@ export const useMapStore = create<MapState>((set) => ({
   chatPrefill: "",
 
   setView: (v) =>
-    set({
-      view: v,
-      scenario: null,
-      events: [],
-      alerts: [],
-      memory: [],
-      selection: null,
-      scenarioTime: 0,
-      playing: false,
+    set((st) => {
+      // Only wipe state when moving in/out of replay, since live/graph/memory
+      // all share the live-seeded data set.
+      const crossesReplayBoundary =
+        (st.view === "replay") !== (v === "replay");
+      if (!crossesReplayBoundary) return { view: v };
+      return {
+        view: v,
+        scenario: null,
+        events: [],
+        alerts: [],
+        memory: [],
+        selection: null,
+        scenarioTime: 0,
+        playing: false,
+      };
     }),
   setScenario: (s) =>
     set({

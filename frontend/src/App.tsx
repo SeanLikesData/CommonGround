@@ -6,7 +6,6 @@ import DetailPanel from "@/components/DetailPanel";
 import GraphView from "@/components/GraphView";
 import LayerToggle from "@/components/LayerToggle";
 import MapCanvas from "@/components/MapCanvas";
-import MemorySidebar from "@/components/MemorySidebar";
 import MemoryView from "@/components/MemoryView";
 import ModeBadge from "@/components/ModeBadge";
 import SpotLegend from "@/components/SpotLegend";
@@ -43,15 +42,14 @@ export default function App() {
             <SpotLegend />
             <DetailPanel />
           </div>
-          <MemorySidebar />
           {view === "replay" && scenario && <TimeBar />}
-          <ChatLauncher />
-          <ChatDrawer />
         </>
       )}
       {view === "graph" && <GraphView />}
       {view === "memory" && <MemoryView />}
       <TopTabs />
+      <ChatLauncher />
+      <ChatDrawer />
     </div>
   );
 }
