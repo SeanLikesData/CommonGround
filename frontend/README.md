@@ -5,10 +5,10 @@ Vite + React 19 + TypeScript single-page demo. Renders the AO LIONHEART tactical
 ## Dev
 
 ```bash
-npm install
-npm run dev      # http://localhost:3000
-npm run lint
-npm run build
+pnpm install
+pnpm dev         # http://localhost:3000
+pnpm lint
+pnpm build
 ```
 
 ## Env
