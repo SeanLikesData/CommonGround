@@ -47,7 +47,7 @@ const ALL_LAYERS: LayerId[] = [
 ];
 
 export const useMapStore = create<MapState>((set) => ({
-  scenario: "wadi_hamrin",
+  scenario: null,
   events: [],
   alerts: [],
   memory: [],
