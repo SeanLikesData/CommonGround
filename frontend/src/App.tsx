@@ -1,4 +1,6 @@
 import AlertFeed from "@/components/AlertFeed";
+import ChatDrawer from "@/components/ChatDrawer";
+import ChatLauncher from "@/components/ChatLauncher";
 import DetailPanel from "@/components/DetailPanel";
 import MapCanvas from "@/components/MapCanvas";
 import TimeBar from "@/components/TimeBar";
@@ -17,6 +19,8 @@ export default function App() {
       <AlertFeed />
       <DetailPanel />
       <TimeBar />
+      <ChatLauncher />
+      <ChatDrawer />
     </div>
   );
 }

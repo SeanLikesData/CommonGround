@@ -6,6 +6,7 @@ export default function AlertDetail({ alert }: { alert: AlertEvent }) {
   const events = useMapStore((s) => s.events);
   const memory = useMapStore((s) => s.memory);
   const setSelection = useMapStore((s) => s.setSelection);
+  const openChat = useMapStore((s) => s.openChat);
 
   const contributing = events.filter((e) => alert.contributingSpotIds.includes(e.id));
   const cited = memory.filter((m) => alert.citedMemoryIds.includes(m.id));
@@ -23,6 +24,17 @@ export default function AlertDetail({ alert }: { alert: AlertEvent }) {
       </div>
 
       <div className="text-base leading-snug text-zinc-100">{alert.summary}</div>
+
+      <button
+        onClick={() =>
+          openChat(
+            `Re: "${alert.summary}" — `,
+          )
+        }
+        className="self-start rounded border border-cyan-400/40 bg-cyan-500/10 px-3 py-1 text-xs font-medium text-cyan-200 hover:bg-cyan-500/20"
+      >
+        Ask the agent
+      </button>
 
       {alert.reasoning && (
         <div className="rounded border border-zinc-700/70 bg-zinc-950/60 p-3">

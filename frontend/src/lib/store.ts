@@ -19,6 +19,8 @@ interface MapState {
   playing: boolean;
   speed: 1 | 10 | 100;
   visibleLayers: Set<LayerId>;
+  chatOpen: boolean;
+  chatPrefill: string;
 
   setScenario: (s: Scenario) => void;
   addSpot: (e: SpotEvent) => void;
@@ -29,6 +31,8 @@ interface MapState {
   setPlaying: (p: boolean) => void;
   setSpeed: (s: 1 | 10 | 100) => void;
   toggleLayer: (id: LayerId) => void;
+  openChat: (prefill?: string) => void;
+  closeChat: () => void;
   reset: () => void;
 }
 
@@ -52,6 +56,8 @@ export const useMapStore = create<MapState>((set) => ({
   playing: false,
   speed: 10,
   visibleLayers: new Set(ALL_LAYERS),
+  chatOpen: false,
+  chatPrefill: "",
 
   setScenario: (s) =>
     set({
@@ -77,6 +83,8 @@ export const useMapStore = create<MapState>((set) => ({
       else next.add(id);
       return { visibleLayers: next };
     }),
+  openChat: (prefill = "") => set({ chatOpen: true, chatPrefill: prefill }),
+  closeChat: () => set({ chatOpen: false, chatPrefill: "" }),
   reset: () =>
     set({
       events: [],
