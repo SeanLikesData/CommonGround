@@ -26,7 +26,7 @@ export default function DetailPanel() {
   }
 
   return (
-    <div className="pointer-events-auto absolute right-3 top-16 z-30 flex max-h-[calc(100vh-12rem)] w-[26rem] flex-col overflow-hidden rounded-lg border border-zinc-700/70 bg-zinc-900/85 shadow-lg backdrop-blur">
+    <div className="pointer-events-auto flex max-h-[calc(100vh-12rem)] w-[26rem] flex-col overflow-hidden rounded-lg border border-zinc-700/70 bg-zinc-900/85 shadow-lg backdrop-blur">
       <div className="flex items-center justify-between border-b border-zinc-700/70 px-3 py-2">
         <span className="text-xs font-semibold uppercase tracking-wider text-zinc-300">
           Detail

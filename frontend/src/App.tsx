@@ -25,10 +25,12 @@ export default function App() {
       <MapCanvas />
       <Watermark />
       <ModeBadge />
-      <DemoMenu />
       <AlertFeed />
-      <DetailPanel />
-      <LayerToggle />
+      <div className="pointer-events-none absolute right-3 top-3 z-30 flex max-h-[calc(100vh-1.5rem)] flex-col items-end gap-2 overflow-y-auto pr-0.5">
+        <DemoMenu />
+        <LayerToggle />
+        <DetailPanel />
+      </div>
       <MemorySidebar />
       {scenario && <TimeBar />}
       <ChatLauncher />
