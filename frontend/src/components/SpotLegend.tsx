@@ -1,12 +1,4 @@
-import type { SpotSource } from "@/lib/types";
-
-const REPORTERS: { source: SpotSource; glyph: string; label: string }[] = [
-  { source: "drone", glyph: "●", label: "Drone" },
-  { source: "ugs", glyph: "▲", label: "UGS" },
-  { source: "rf", glyph: "◆", label: "RF" },
-  { source: "human", glyph: "★", label: "Human" },
-  { source: "trail-cam", glyph: "■", label: "Trail cam" },
-];
+import { REPORTERS } from "@/lib/reporters";
 
 export default function SpotLegend() {
   return (
