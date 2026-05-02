@@ -67,7 +67,7 @@ export const useMapStore = create<MapState>((set) => ({
       memory: [],
       selection: null,
       scenarioTime: 0,
-      playing: false,
+      playing: s !== null,
     }),
   addSpot: (e) => set((st) => ({ events: [...st.events, e] })),
   addAlert: (a) => set((st) => ({ alerts: [...st.alerts, a] })),

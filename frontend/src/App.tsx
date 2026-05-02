@@ -12,12 +12,14 @@ import TimeBar from "@/components/TimeBar";
 import Watermark from "@/components/Watermark";
 import { useMapStore } from "@/lib/store";
 import { useFlyToOnAlert } from "@/lib/useFlyToOnAlert";
+import { useLiveSeed } from "@/lib/useLiveSeed";
 import { useTape } from "@/lib/useTape";
 import { useTapePlayer } from "@/lib/tapePlayer";
 
 export default function App() {
   const tape = useTape();
   useTapePlayer(tape);
+  useLiveSeed();
   useFlyToOnAlert();
   const scenario = useMapStore((s) => s.scenario);
 
