@@ -25,7 +25,7 @@ export default function AlertFeed() {
   };
 
   return (
-    <div className="pointer-events-auto absolute left-3 top-14 z-30 flex max-h-[calc(100vh-9rem)] w-80 flex-col overflow-hidden rounded-lg border border-zinc-700/70 bg-zinc-900/85 shadow-lg backdrop-blur">
+    <div className="pointer-events-auto absolute left-3 top-28 z-30 flex max-h-[calc(100vh-14rem)] w-80 flex-col overflow-hidden rounded-lg border border-zinc-700/70 bg-zinc-900/85 shadow-lg backdrop-blur">
       <div className="flex items-center justify-between border-b border-zinc-700/70 px-3 py-2 text-xs font-semibold uppercase tracking-wider text-zinc-300">
         <span>Alerts</span>
         <span className="rounded bg-zinc-800 px-1.5 py-0.5 text-[10px] text-zinc-400">

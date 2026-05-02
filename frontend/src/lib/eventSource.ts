@@ -25,12 +25,7 @@ export class TapeSource implements EventSource {
   }
 }
 
-export function pickSource(): EventSource {
-  const url = new URL(window.location.href);
-  const mode = url.searchParams.get("source") ?? "tape";
-  switch (mode) {
-    case "tape":
-    default:
-      return new TapeSource("/tapes/wadi-hamrin.jsonl");
-  }
+export function pickSource(scenario: "wadi_hamrin" | "patrol_hvs"): EventSource {
+  const url = scenario === "patrol_hvs" ? "/tapes/patrol-hvs.jsonl" : "/tapes/wadi-hamrin.jsonl";
+  return new TapeSource(url);
 }

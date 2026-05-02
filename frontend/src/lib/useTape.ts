@@ -1,12 +1,18 @@
 import { useEffect, useState } from "react";
 import { pickSource } from "./eventSource";
+import { useMapStore } from "./store";
 import type { TapeLine } from "./types";
 
 export function useTape(): TapeLine[] | null {
+  const scenario = useMapStore((s) => s.scenario);
   const [tape, setTape] = useState<TapeLine[] | null>(null);
   useEffect(() => {
+    if (!scenario) {
+      setTape(null);
+      return;
+    }
     let cancelled = false;
-    pickSource()
+    pickSource(scenario)
       .load()
       .then((lines) => {
         if (!cancelled) setTape(lines);
@@ -15,6 +21,6 @@ export function useTape(): TapeLine[] | null {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [scenario]);
   return tape;
 }

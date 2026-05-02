@@ -78,8 +78,11 @@ export default function MapCanvas() {
     mapRef.current = map;
     setMapInstance(map);
 
-    map.addControl(new maplibregl.NavigationControl({ showCompass: true }), "top-right");
-    map.addControl(new maplibregl.ScaleControl({ unit: "metric" }), "bottom-right");
+    map.addControl(
+      new maplibregl.NavigationControl({ showCompass: true }),
+      "bottom-right",
+    );
+    map.addControl(new maplibregl.ScaleControl({ unit: "metric" }), "bottom-left");
 
     map.on("load", async () => {
       if (terrainSource) {
