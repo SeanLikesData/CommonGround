@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import maplibregl, { Map as MapLibreMap } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import {
@@ -11,12 +11,36 @@ import {
   satelliteStyleUrl,
   terrainSource,
 } from "@/lib/mapStyle";
+import { useMapStore } from "@/lib/store";
+import { colors } from "@/lib/symbology";
+import type { SpotEvent } from "@/lib/types";
 
 const GEOJSON_URL = "/geojson/ao-lionheart.geojson";
+
+function spotsToFeatureCollection(spots: SpotEvent[]) {
+  return {
+    type: "FeatureCollection" as const,
+    features: spots.map((s) => ({
+      type: "Feature" as const,
+      properties: {
+        id: s.id,
+        severity: s.severity,
+        source: s.source,
+        salute: s.salute,
+      },
+      geometry: { type: "Point" as const, coordinates: s.location },
+    })),
+  };
+}
 
 export default function MapCanvas() {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
+  const [styleReady, setStyleReady] = useState(false);
+
+  const events = useMapStore((s) => s.events);
+  const setSelection = useMapStore((s) => s.setSelection);
+  const visibleLayers = useMapStore((s) => s.visibleLayers);
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
@@ -56,7 +80,6 @@ export default function MapCanvas() {
         const geojson = await res.json();
         map.addSource("ao", { type: "geojson", data: geojson });
 
-        // Wadi (real geography)
         map.addLayer({
           id: "wadi-line",
           type: "line",
@@ -70,7 +93,6 @@ export default function MapCanvas() {
           },
         });
 
-        // MSR
         map.addLayer({
           id: "msr-line",
           type: "line",
@@ -83,7 +105,6 @@ export default function MapCanvas() {
           },
         });
 
-        // AO boundary
         map.addLayer({
           id: "ao-boundary",
           type: "line",
@@ -96,7 +117,6 @@ export default function MapCanvas() {
           },
         });
 
-        // NAIs
         map.addLayer({
           id: "nai-fill",
           type: "fill",
@@ -119,7 +139,6 @@ export default function MapCanvas() {
           },
         });
 
-        // Drone orbit
         map.addLayer({
           id: "drone-orbit",
           type: "line",
@@ -133,7 +152,6 @@ export default function MapCanvas() {
           },
         });
 
-        // Sensors (point)
         map.addLayer({
           id: "sensors",
           type: "circle",
@@ -147,7 +165,6 @@ export default function MapCanvas() {
           },
         });
 
-        // Objective + village + suspected site (point markers)
         map.addLayer({
           id: "objective",
           type: "circle",
@@ -189,7 +206,37 @@ export default function MapCanvas() {
           },
         });
 
-        // Labels
+        // Dynamic SPOT layer
+        map.addSource("spots", {
+          type: "geojson",
+          data: { type: "FeatureCollection", features: [] },
+        });
+
+        map.addLayer({
+          id: "spots-layer",
+          type: "circle",
+          source: "spots",
+          paint: {
+            "circle-radius": 8,
+            "circle-color": [
+              "match",
+              ["get", "severity"],
+              "low",
+              colors.severity.low,
+              "med",
+              colors.severity.med,
+              "med-high",
+              colors.severity.medHigh,
+              "high",
+              colors.severity.high,
+              "#94a3b8",
+            ],
+            "circle-stroke-color": "#0f172a",
+            "circle-stroke-width": 2,
+            "circle-opacity": 0.9,
+          },
+        });
+
         map.addLayer({
           id: "ao-labels",
           type: "symbol",
@@ -204,7 +251,6 @@ export default function MapCanvas() {
             "text-size": 11,
             "text-offset": [0, 1.2],
             "text-anchor": "top",
-            "text-allow-overlap": false,
           },
           paint: {
             "text-color": "#f8fafc",
@@ -212,6 +258,27 @@ export default function MapCanvas() {
             "text-halo-width": 1.5,
           },
         });
+
+        // Click handlers
+        map.on("click", "spots-layer", (e) => {
+          const f = e.features?.[0];
+          if (!f) return;
+          const id = f.properties?.id as string;
+          if (id) setSelection({ kind: "spot", id });
+        });
+        map.on("click", "sensors", (e) => {
+          const f = e.features?.[0];
+          if (!f) return;
+          const id = f.properties?.label as string;
+          if (id) setSelection({ kind: "sensor", id });
+        });
+
+        for (const id of ["spots-layer", "sensors"]) {
+          map.on("mouseenter", id, () => (map.getCanvas().style.cursor = "pointer"));
+          map.on("mouseleave", id, () => (map.getCanvas().style.cursor = ""));
+        }
+
+        setStyleReady(true);
       } catch (err) {
         console.error("Failed to load AO geojson", err);
       }
@@ -220,8 +287,34 @@ export default function MapCanvas() {
     return () => {
       map.remove();
       mapRef.current = null;
+      setStyleReady(false);
     };
-  }, []);
+  }, [setSelection]);
+
+  // Push events into the spots source whenever they change.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !styleReady) return;
+    const src = map.getSource("spots");
+    if (src && "setData" in src) {
+      (src as maplibregl.GeoJSONSource).setData(spotsToFeatureCollection(events));
+    }
+  }, [events, styleReady]);
+
+  // Layer visibility.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !styleReady) return;
+    const setVis = (id: string, visible: boolean) => {
+      if (!map.getLayer(id)) return;
+      map.setLayoutProperty(id, "visibility", visible ? "visible" : "none");
+    };
+    setVis("sensors", visibleLayers.has("sensors"));
+    setVis("nai-fill", visibleLayers.has("nais"));
+    setVis("nai-line", visibleLayers.has("nais"));
+    setVis("drone-orbit", visibleLayers.has("drone-orbit"));
+    setVis("spots-layer", visibleLayers.has("spots"));
+  }, [visibleLayers, styleReady]);
 
   return <div ref={containerRef} className="absolute inset-0" />;
 }
