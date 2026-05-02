@@ -1,0 +1,210 @@
+{
+  "type": "FeatureCollection",
+  "metadata": {
+    "name": "AO LIONHEART — synthetic training scenario",
+    "disclaimer": "All tactical graphics, unit positions, NAIs, sensor placements, and labels are FICTIONAL. Geography (terrain, drainage envelope, road corridor) is real Hamrin range, Iraq. Do not interpret as actual intelligence.",
+    "anchor": "Hamrin range, Diyala / Salah ad-Din border, northern Iraq",
+    "bbox_approx": [44.30, 34.40, 44.45, 34.50],
+    "crs": "EPSG:4326",
+    "needs_osm_refinement": [
+      "MSR PYTHON geometry should snap to a real OSM road in this envelope",
+      "VIL FORK should be placed on a real settlement node",
+      "Wadi geometry should be traced from DEM drainage if OSM coverage is thin"
+    ]
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "feature_type": "ao_boundary",
+        "label": "AO LIONHEART",
+        "style_class": "synthetic_overlay"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [44.300, 34.400],
+          [44.450, 34.400],
+          [44.450, 34.500],
+          [44.300, 34.500],
+          [44.300, 34.400]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "feature_type": "objective",
+        "label": "OBJ FALCON",
+        "note": "fictional ridge objective; place on real high ground from DEM",
+        "style_class": "synthetic_overlay"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [44.400, 34.475]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "feature_type": "msr",
+        "label": "MSR PYTHON",
+        "note": "fictional MSR label; should snap to real OSM road through southern AO",
+        "style_class": "synthetic_overlay"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [44.305, 34.412],
+          [44.340, 34.414],
+          [44.370, 34.413],
+          [44.400, 34.415],
+          [44.430, 34.418],
+          [44.448, 34.420]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "feature_type": "village",
+        "label": "VIL FORK",
+        "note": "fictional village name; place on real settlement node at road junction",
+        "style_class": "synthetic_overlay"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [44.355, 34.418]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "feature_type": "wadi",
+        "label": "Wadi Hamrin (scenario)",
+        "note": "real Hamrin drainage runs NE→SW; trace specific wadi from DEM",
+        "style_class": "real_geography"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [44.410, 34.480],
+          [44.400, 34.465],
+          [44.390, 34.450],
+          [44.380, 34.435],
+          [44.372, 34.420]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "feature_type": "nai",
+        "label": "NAI-7",
+        "note": "wadi mouth where covered approach meets MSR — ambush trigger zone",
+        "style_class": "synthetic_overlay"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [44.365, 34.418],
+          [44.380, 34.418],
+          [44.380, 34.428],
+          [44.365, 34.428],
+          [44.365, 34.418]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "feature_type": "nai",
+        "label": "NAI-12",
+        "note": "high ground east of OBJ FALCON — overwatch / observation post candidate",
+        "style_class": "synthetic_overlay"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [44.415, 34.470],
+          [44.430, 34.470],
+          [44.430, 34.482],
+          [44.415, 34.482],
+          [44.415, 34.470]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "feature_type": "sensor",
+        "sensor_type": "ugs_seismic_acoustic",
+        "label": "UGS-A",
+        "style_class": "synthetic_overlay"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [44.385, 34.440]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "feature_type": "sensor",
+        "sensor_type": "ugs_seismic_acoustic",
+        "label": "UGS-B",
+        "style_class": "synthetic_overlay"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [44.395, 34.445]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "feature_type": "sensor",
+        "sensor_type": "rf_edge",
+        "label": "RF-1",
+        "note": "edge RF sensor on overwatch hill — passive monitoring of adversary command bands",
+        "style_class": "synthetic_overlay"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [44.420, 34.460]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "feature_type": "drone_orbit",
+        "label": "UAS-1 orbit",
+        "note": "operator+drone orbit centered on NAI-7 after cueing",
+        "style_class": "synthetic_overlay"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [44.368, 34.420],
+          [44.378, 34.420],
+          [44.378, 34.428],
+          [44.368, 34.428],
+          [44.368, 34.420]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "feature_type": "suspected_site",
+        "label": "Suspected staging compound (POL inference)",
+        "note": "Scenario 3 tease — agent-derived patrol centroid; fictional walled compound",
+        "style_class": "synthetic_overlay"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [44.422, 34.485]
+      }
+    }
+  ]
+}
