@@ -18,19 +18,29 @@ import type { AlertEvent, SpotEvent } from "@/lib/types";
 
 const GEOJSON_URL = "/geojson/ao-lionheart.geojson";
 
-function spotsToFeatureCollection(spots: SpotEvent[]) {
+// Window over which a SPOT report fades from "fresh" to "stale" (in scenario seconds).
+const RECENCY_WINDOW_SEC = 1800;
+
+function spotsToFeatureCollection(spots: SpotEvent[], scenarioTime: number) {
+  const latestT = spots.reduce((m, s) => (s.t > m ? s.t : m), 0);
+  const now = Math.max(scenarioTime, latestT);
   return {
     type: "FeatureCollection" as const,
-    features: spots.map((s) => ({
-      type: "Feature" as const,
-      properties: {
-        id: s.id,
-        severity: s.severity,
-        source: s.source,
-        salute: s.salute,
-      },
-      geometry: { type: "Point" as const, coordinates: s.location },
-    })),
+    features: spots.map((s) => {
+      const age = Math.max(0, now - s.t);
+      const recency = Math.max(0, Math.min(1, 1 - age / RECENCY_WINDOW_SEC));
+      return {
+        type: "Feature" as const,
+        properties: {
+          id: s.id,
+          severity: s.severity,
+          source: s.source,
+          salute: s.salute,
+          recency,
+        },
+        geometry: { type: "Point" as const, coordinates: s.location },
+      };
+    }),
   };
 }
 
@@ -60,6 +70,7 @@ export default function MapCanvas() {
   const alerts = useMapStore((s) => s.alerts);
   const setSelection = useMapStore((s) => s.setSelection);
   const visibleLayers = useMapStore((s) => s.visibleLayers);
+  const scenarioTime = useMapStore((s) => s.scenarioTime);
   const markersRef = useRef<Map<string, maplibregl.Marker>>(new Map());
 
   useEffect(() => {
@@ -287,28 +298,87 @@ export default function MapCanvas() {
           data: { type: "FeatureCollection", features: [] },
         });
 
+        // SPOT halo: severity-colored, fades and shrinks as the report ages.
+        const severityMatch: maplibregl.ExpressionSpecification = [
+          "match",
+          ["get", "severity"],
+          "low",
+          colors.severity.low,
+          "med",
+          colors.severity.med,
+          "med-high",
+          colors.severity.medHigh,
+          "high",
+          colors.severity.high,
+          "#94a3b8",
+        ];
         map.addLayer({
-          id: "spots-layer",
+          id: "spots-halo",
           type: "circle",
           source: "spots",
           paint: {
-            "circle-radius": 8,
-            "circle-color": [
-              "match",
-              ["get", "severity"],
-              "low",
-              colors.severity.low,
-              "med",
-              colors.severity.med,
-              "med-high",
-              colors.severity.medHigh,
-              "high",
-              colors.severity.high,
-              "#94a3b8",
+            "circle-radius": [
+              "interpolate",
+              ["linear"],
+              ["get", "recency"],
+              0,
+              9,
+              1,
+              14,
+            ],
+            "circle-color": severityMatch,
+            "circle-opacity": [
+              "interpolate",
+              ["linear"],
+              ["get", "recency"],
+              0,
+              0.12,
+              1,
+              0.55,
             ],
             "circle-stroke-color": "#0f172a",
-            "circle-stroke-width": 2,
-            "circle-opacity": 0.9,
+            "circle-stroke-width": 1,
+            "circle-stroke-opacity": 0.5,
+          },
+        });
+
+        // SPOT glyph: shape encodes the reporter type, color tracks recency × severity.
+        map.addLayer({
+          id: "spots-layer",
+          type: "symbol",
+          source: "spots",
+          layout: {
+            "text-field": [
+              "match",
+              ["get", "source"],
+              "drone",
+              "●",
+              "ugs",
+              "▲",
+              "rf",
+              "◆",
+              "human",
+              "★",
+              "trail-cam",
+              "■",
+              "●",
+            ],
+            "text-size": 16,
+            "text-allow-overlap": true,
+            "text-ignore-placement": true,
+          },
+          paint: {
+            "text-color": [
+              "interpolate",
+              ["linear"],
+              ["get", "recency"],
+              0,
+              "#94a3b8",
+              1,
+              severityMatch,
+            ],
+            "text-halo-color": "#0f172a",
+            "text-halo-width": 1.6,
           },
         });
 
@@ -335,12 +405,14 @@ export default function MapCanvas() {
         });
 
         // Click handlers
-        map.on("click", "spots-layer", (e) => {
-          const f = e.features?.[0];
-          if (!f) return;
-          const id = f.properties?.id as string;
-          if (id) setSelection({ kind: "spot", id });
-        });
+        for (const layerId of ["spots-layer", "spots-halo"]) {
+          map.on("click", layerId, (e) => {
+            const f = e.features?.[0];
+            if (!f) return;
+            const id = f.properties?.id as string;
+            if (id) setSelection({ kind: "spot", id });
+          });
+        }
         for (const layerId of ["sensors", "trail-cams"]) {
           map.on("click", layerId, (e) => {
             const f = e.features?.[0];
@@ -350,7 +422,7 @@ export default function MapCanvas() {
           });
         }
 
-        for (const id of ["spots-layer", "sensors", "trail-cams"]) {
+        for (const id of ["spots-layer", "spots-halo", "sensors", "trail-cams"]) {
           map.on("mouseenter", id, () => (map.getCanvas().style.cursor = "pointer"));
           map.on("mouseleave", id, () => (map.getCanvas().style.cursor = ""));
         }
@@ -372,15 +444,17 @@ export default function MapCanvas() {
     };
   }, [setSelection]);
 
-  // Push events into the spots source whenever they change.
+  // Push events into the spots source whenever they (or scenario time) change.
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !styleReady) return;
     const src = map.getSource("spots");
     if (src && "setData" in src) {
-      (src as maplibregl.GeoJSONSource).setData(spotsToFeatureCollection(events));
+      (src as maplibregl.GeoJSONSource).setData(
+        spotsToFeatureCollection(events, scenarioTime),
+      );
     }
-  }, [events, styleReady]);
+  }, [events, scenarioTime, styleReady]);
 
   // Update connection lines whenever alerts or events change.
   useEffect(() => {
@@ -439,6 +513,7 @@ export default function MapCanvas() {
     setVis("nai-line", visibleLayers.has("nais"));
     setVis("drone-orbit", visibleLayers.has("drone-orbit"));
     setVis("spots-layer", visibleLayers.has("spots"));
+    setVis("spots-halo", visibleLayers.has("spots"));
     setVis("connections-layer", visibleLayers.has("alerts"));
     setVis("patrol-loop", visibleLayers.has("inferred"));
   }, [visibleLayers, styleReady]);
