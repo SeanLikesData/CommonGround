@@ -8,9 +8,13 @@ const LIVE_SEED_TAPES = ["/tapes/wadi-hamrin.jsonl", "/tapes/patrol-hvs.jsonl"];
 // dump its SPOTs/alerts/memories into the store as the AO's current state.
 // Without this, sensors and the map have no historical activity to show.
 export function useLiveSeed() {
+  const view = useMapStore((s) => s.view);
   const scenario = useMapStore((s) => s.scenario);
 
   useEffect(() => {
+    // Replay tab is driven by the tape player; everywhere else we want the
+    // seed data available so the map / graph / memory tabs are populated.
+    if (view === "replay") return;
     if (scenario !== null) return;
     let cancelled = false;
 
@@ -42,5 +46,5 @@ export function useLiveSeed() {
     return () => {
       cancelled = true;
     };
-  }, [scenario]);
+  }, [view, scenario]);
 }

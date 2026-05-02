@@ -9,7 +9,10 @@ import type {
 
 type Scenario = "wadi_hamrin" | "patrol_hvs" | null;
 
+export type View = "live" | "replay" | "graph" | "memory";
+
 interface MapState {
+  view: View;
   scenario: Scenario;
   events: SpotEvent[];
   alerts: AlertEvent[];
@@ -22,6 +25,7 @@ interface MapState {
   chatOpen: boolean;
   chatPrefill: string;
 
+  setView: (v: View) => void;
   setScenario: (s: Scenario) => void;
   addSpot: (e: SpotEvent) => void;
   addAlert: (a: AlertEvent) => void;
@@ -47,6 +51,7 @@ const ALL_LAYERS: LayerId[] = [
 ];
 
 export const useMapStore = create<MapState>((set) => ({
+  view: "live",
   scenario: null,
   events: [],
   alerts: [],
@@ -59,6 +64,17 @@ export const useMapStore = create<MapState>((set) => ({
   chatOpen: false,
   chatPrefill: "",
 
+  setView: (v) =>
+    set({
+      view: v,
+      scenario: null,
+      events: [],
+      alerts: [],
+      memory: [],
+      selection: null,
+      scenarioTime: 0,
+      playing: false,
+    }),
   setScenario: (s) =>
     set({
       scenario: s,
