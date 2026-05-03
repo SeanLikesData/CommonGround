@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import os
 import time
@@ -86,6 +87,41 @@ def run_scenario_step(col_signals, col_control, control):
     )
 
 
+# ── scenario engine loop ──────────────────────────────────────────────────────
+
+async def run_scenario_engine(col_signals, scenario_name: str):
+    """Run a named scenario via SimulationEngine, inserting events into MongoDB."""
+    import pathlib
+    from simulation.engine import SimulationEngine
+    from simulation.loader import load_scenario
+
+    yaml_path = (
+        pathlib.Path(__file__).parent / "simulation" / "scenarios" / f"{scenario_name}.yaml"
+    )
+    if not yaml_path.exists():
+        log.error("Scenario file not found: %s", yaml_path)
+        return
+
+    scenario = load_scenario(str(yaml_path))
+    time_scale = float(os.environ.get("TIME_SCALE", "1.0"))
+    engine = SimulationEngine(scenario, time_scale=time_scale)
+
+    log.info(
+        "Running scenario '%s' (time_scale=%.1fx, duration=%ds).",
+        scenario_name,
+        time_scale,
+        scenario.duration_seconds,
+    )
+
+    async def on_event(event: dict):
+        signal = {k: v for k, v in event.items() if not k.startswith("_")}
+        col_signals.insert_one(signal)
+        log.debug("Emitted %s event at sim_time=%.1fs", signal["modality"], event["sim_time_s"])
+
+    await engine.run(on_event, tick_hz=10.0)
+    log.info("Scenario '%s' complete.", scenario_name)
+
+
 # ── main loop ─────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
@@ -94,15 +130,20 @@ if __name__ == "__main__":
     col_signals = db["signals"]
     col_control = db["control"]
 
-    log.info("data-streaming starting. Polling every %ds.", INTERVAL)
+    scenario_name = os.environ.get("SCENARIO")
 
-    while True:
-        try:
-            control = get_control(col_control)
-            if control and control.get("status") == "active":
-                run_scenario_step(col_signals, col_control, control)
-            else:
-                emit_signals(col_signals)
-        except Exception as e:
-            log.error("Error in main loop: %s", e)
-        time.sleep(INTERVAL)
+    if scenario_name:
+        log.info("SCENARIO=%s — running engine directly.", scenario_name)
+        asyncio.run(run_scenario_engine(col_signals, scenario_name))
+    else:
+        log.info("data-streaming starting. Polling every %ds.", INTERVAL)
+        while True:
+            try:
+                control = get_control(col_control)
+                if control and control.get("status") == "active":
+                    run_scenario_step(col_signals, col_control, control)
+                else:
+                    emit_signals(col_signals)
+            except Exception as e:
+                log.error("Error in main loop: %s", e)
+            time.sleep(INTERVAL)
