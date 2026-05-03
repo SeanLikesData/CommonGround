@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import Markdown from "@/components/Markdown";
 import { useMapStore } from "@/lib/store";
 
 const AGENT_URL = import.meta.env.VITE_AGENT_URL ?? "http://localhost:8001";
@@ -15,6 +16,7 @@ export default function AgentPanel() {
   const prefill = useMapStore((s) => s.chatPrefill);
   const openChat = useMapStore((s) => s.openChat);
   const closeChat = useMapStore((s) => s.closeChat);
+  const openSitrep = useMapStore((s) => s.openSitrep);
 
   const [input, setInput] = useState("");
   const [turns, setTurns] = useState<Turn[]>([]);
@@ -89,13 +91,22 @@ export default function AgentPanel() {
             Agent
           </span>
         </div>
-        <button
-          onClick={closeChat}
-          title="Collapse"
-          className="rounded px-2 py-0.5 text-sm text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
-        >
-          ›
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={openSitrep}
+            title="Generate SITREP"
+            className="rounded border border-cyan-500/30 bg-cyan-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-cyan-200 hover:bg-cyan-500/25"
+          >
+            SITREP
+          </button>
+          <button
+            onClick={closeChat}
+            title="Collapse"
+            className="rounded px-2 py-0.5 text-sm text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
+          >
+            ›
+          </button>
+        </div>
       </header>
 
       <div ref={scrollRef} className="flex flex-1 flex-col gap-3 overflow-y-auto p-4">
@@ -113,8 +124,8 @@ export default function AgentPanel() {
               {turn.question}
             </div>
             {turn.answer && (
-              <div className="rounded border border-zinc-800 bg-zinc-950/60 px-3 py-2 text-sm leading-relaxed text-zinc-100 whitespace-pre-wrap">
-                {turn.answer}
+              <div className="rounded border border-zinc-800 bg-zinc-950/60 px-3 py-2 text-sm leading-relaxed text-zinc-100">
+                <Markdown>{turn.answer}</Markdown>
               </div>
             )}
             {turn.error && (

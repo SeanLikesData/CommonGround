@@ -4,6 +4,7 @@ import DetailPanel from "@/components/DetailPanel";
 import LeftPanel from "@/components/LeftPanel";
 import MapCanvas from "@/components/MapCanvas";
 import NavRail from "@/components/NavRail";
+import SitrepModal from "@/components/SitrepModal";
 import SpotLegend from "@/components/SpotLegend";
 import TimeScrubber from "@/components/TimeScrubber";
 import { useMapStore } from "@/lib/store";
@@ -17,6 +18,8 @@ export default function App() {
 
   const events = useMapStore((s) => s.events);
   const alerts = useMapStore((s) => s.alerts);
+  const sitrepOpen = useMapStore((s) => s.sitrepOpen);
+  const closeSitrep = useMapStore((s) => s.closeSitrep);
   const bounds = useMemo(() => {
     let min = Infinity;
     let max = -Infinity;
@@ -50,6 +53,7 @@ export default function App() {
         <TimeScrubber bounds={bounds} />
       </div>
       <AgentPanel />
+      <SitrepModal open={sitrepOpen} onClose={closeSitrep} />
     </div>
   );
 }
