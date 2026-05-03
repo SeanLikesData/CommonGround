@@ -42,6 +42,34 @@ function shortId(id: string): string {
   return id.length > 12 ? `${id.slice(0, 6)}…${id.slice(-4)}` : id;
 }
 
+function displayName(n: GraphNode): string {
+  const p = n.props;
+  switch (n.label) {
+    case "Modality":
+      return String(p.name ?? "modality").toUpperCase();
+    case "Sensor":
+      return String(p.id ?? shortId(n.id));
+    case "Region":
+    case "Location":
+      return String(p.geohash ?? shortId(n.id));
+    case "Signal": {
+      const mod = p.modality ? String(p.modality).toUpperCase() : "SIG";
+      const ts = typeof p.timestamp === "string" ? p.timestamp.slice(11, 19) : "";
+      return ts ? `${mod} ${ts}` : mod;
+    }
+    case "Report": {
+      const mod = p.modality ? String(p.modality).toUpperCase() : "RPT";
+      const narrative =
+        typeof p.narrative === "string" && p.narrative.length > 0
+          ? p.narrative.slice(0, 28) + (p.narrative.length > 28 ? "…" : "")
+          : "";
+      return narrative ? `${mod}: ${narrative}` : mod;
+    }
+    default:
+      return shortId(n.id);
+  }
+}
+
 export default function GraphView() {
   const [data, setData] = useState<GraphPayload | null>(null);
   const [loading, setLoading] = useState(false);
@@ -150,12 +178,12 @@ export default function GraphView() {
               backgroundColor="#09090b"
               cooldownTicks={120}
               d3VelocityDecay={0.3}
-              nodeRelSize={4}
-              nodeVal={(n) => 1 + Math.sqrt((n as GraphNode).degree ?? 0)}
+              nodeRelSize={6}
+              nodeVal={(n) => 2 + Math.sqrt((n as GraphNode).degree ?? 0) * 1.5}
               nodeColor={(n) => colorFor((n as GraphNode).label)}
               nodeLabel={(n) => {
                 const node = n as GraphNode;
-                return `${node.label}: ${shortId(node.id)}`;
+                return `${node.label}: ${displayName(node)}`;
               }}
               linkColor={() => "rgba(148,163,184,0.35)"}
               linkDirectionalArrowLength={3}
@@ -170,16 +198,25 @@ export default function GraphView() {
                 }
               }}
               onBackgroundClick={() => setSelected(null)}
+              nodePointerAreaPaint={(n, color, ctx) => {
+                const node = n as GraphNode;
+                const r = 8 + Math.sqrt(node.degree ?? 0) * 1.5;
+                ctx.fillStyle = color;
+                ctx.beginPath();
+                ctx.arc(node.x ?? 0, node.y ?? 0, r, 0, 2 * Math.PI);
+                ctx.fill();
+              }}
               nodeCanvasObjectMode={() => "after"}
               nodeCanvasObject={(n, ctx, scale) => {
                 const node = n as GraphNode;
-                if (scale < 1.2) return;
-                const text = shortId(node.id);
-                ctx.font = `${10 / scale}px sans-serif`;
+                if (scale < 0.8) return;
+                const text = displayName(node);
+                const fontSize = Math.max(10 / scale, 4);
+                ctx.font = `${fontSize}px sans-serif`;
                 ctx.fillStyle = "#e2e8f0";
                 ctx.textAlign = "center";
                 ctx.textBaseline = "top";
-                const r = 4 + Math.sqrt(node.degree ?? 0);
+                const r = 6 + Math.sqrt(node.degree ?? 0) * 1.5;
                 ctx.fillText(text, node.x ?? 0, (node.y ?? 0) + r + 2);
               }}
             />

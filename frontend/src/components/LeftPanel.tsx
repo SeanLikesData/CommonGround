@@ -79,10 +79,14 @@ export default function LeftPanel() {
             ? "•"
             : null;
 
+  // Graph view needs much more room than the default left-panel width.
+  const effectiveWidth =
+    active === "graph" ? `calc(100vw - 400px)` : `${width}px`;
+
   return (
     <aside
       className="relative flex h-full flex-col border-r border-zinc-800 bg-zinc-900/95 backdrop-blur"
-      style={{ width }}
+      style={{ width: effectiveWidth }}
     >
       <header className="flex items-center justify-between border-b border-zinc-800 px-3 py-2">
         <div className="flex items-center gap-2">
