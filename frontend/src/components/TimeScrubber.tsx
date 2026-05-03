@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef } from "react";
-import { PLAY_SPEEDS, useMapStore, type PlaySpeed } from "@/lib/store";
+import { PLAY_DURATIONS, useMapStore, type PlayDuration } from "@/lib/store";
 import { severityColor } from "@/lib/symbology";
 
 // Mission-elapsed time since the start of the loaded window (left edge of
@@ -46,8 +46,8 @@ export default function TimeScrubber({ bounds }: Props) {
   const playing = useMapStore((s) => s.playing);
   const togglePlay = useMapStore((s) => s.togglePlay);
   const setPlaying = useMapStore((s) => s.setPlaying);
-  const playSpeed = useMapStore((s) => s.playSpeed);
-  const setPlaySpeed = useMapStore((s) => s.setPlaySpeed);
+  const playDuration = useMapStore((s) => s.playDuration);
+  const setPlayDuration = useMapStore((s) => s.setPlayDuration);
 
   const trackRef = useRef<HTMLDivElement | null>(null);
   const draggingRef = useRef(false);
@@ -171,20 +171,23 @@ export default function TimeScrubber({ bounds }: Props) {
         )}
       </button>
 
-      <div className="flex h-9 items-center gap-1 rounded-full border border-zinc-800 bg-zinc-900/70 px-1">
-        {PLAY_SPEEDS.map((s) => {
-          const active = s === playSpeed;
+      <div
+        className="flex h-9 items-center gap-1 rounded-full border border-zinc-800 bg-zinc-900/70 px-1"
+        title="Wall-clock seconds to play through full span"
+      >
+        {PLAY_DURATIONS.map((d) => {
+          const active = d === playDuration;
           return (
             <button
-              key={s}
-              onClick={() => setPlaySpeed(s as PlaySpeed)}
+              key={d}
+              onClick={() => setPlayDuration(d as PlayDuration)}
               className={`rounded-full px-2.5 py-1 font-mono text-[11px] transition-colors ${
                 active
                   ? "bg-cyan-500/20 text-cyan-200"
                   : "text-zinc-400 hover:text-zinc-100"
               }`}
             >
-              {s}×
+              {d}s
             </button>
           );
         })}

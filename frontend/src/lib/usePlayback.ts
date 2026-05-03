@@ -1,18 +1,20 @@
 import { useEffect } from "react";
 import { useMapStore } from "./store";
 
-// Drives the playback cursor while `playing` is true. Wall-clock
-// deltas are converted to mission seconds via playSpeed, so 10× plays
-// 10 mission seconds per real second. Stops at the right edge of the
-// loaded data.
+// Drives the playback cursor while `playing` is true. The full span
+// always plays in `playDuration` wall-clock seconds, so cursor advances
+// (span / playDuration) mission-seconds per real second regardless of
+// how long the loaded window is. Stops at the right edge.
 export function usePlayback(bounds: { min: number; max: number } | null) {
   const playing = useMapStore((s) => s.playing);
-  const playSpeed = useMapStore((s) => s.playSpeed);
+  const playDuration = useMapStore((s) => s.playDuration);
   const setCursorT = useMapStore((s) => s.setCursorT);
   const setPlaying = useMapStore((s) => s.setPlaying);
 
   useEffect(() => {
     if (!playing || !bounds || bounds.max <= bounds.min) return;
+    const span = bounds.max - bounds.min;
+    const missionPerReal = span / playDuration;
     let raf = 0;
     let last = performance.now();
 
@@ -21,7 +23,7 @@ export function usePlayback(bounds: { min: number; max: number } | null) {
       last = now;
       const state = useMapStore.getState();
       const current = state.cursorT ?? bounds.max;
-      const next = current + dt * playSpeed;
+      const next = current + dt * missionPerReal;
       if (next >= bounds.max) {
         setCursorT(bounds.max);
         setPlaying(false);
@@ -33,5 +35,5 @@ export function usePlayback(bounds: { min: number; max: number } | null) {
 
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [playing, playSpeed, bounds, setCursorT, setPlaying]);
+  }, [playing, playDuration, bounds, setCursorT, setPlaying]);
 }

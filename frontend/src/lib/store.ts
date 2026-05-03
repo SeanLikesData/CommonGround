@@ -30,8 +30,11 @@ export const ALL_SOURCES: SpotSource[] = [
 const DEFAULT_LEFT_PANEL_WIDTH = 320;
 export const MIN_LEFT_PANEL_WIDTH = 240;
 
-export type PlaySpeed = 1 | 10 | 100 | 1000;
-export const PLAY_SPEEDS: PlaySpeed[] = [1, 10, 100, 1000];
+// Wall-clock seconds it takes to play through the entire loaded span.
+// Lower = faster. Cursor advances span/playDuration mission-seconds per
+// real second.
+export type PlayDuration = 5 | 10 | 30 | 60;
+export const PLAY_DURATIONS: PlayDuration[] = [5, 10, 30, 60];
 
 interface MapState {
   events: SpotEvent[];
@@ -53,7 +56,7 @@ interface MapState {
   // everywhere (map markers, panels). null means "follow latest data".
   cursorT: number | null;
   playing: boolean;
-  playSpeed: PlaySpeed;
+  playDuration: PlayDuration;
 
   addSpot: (e: SpotEvent) => void;
   addAlert: (a: AlertEvent) => void;
@@ -74,7 +77,7 @@ interface MapState {
   setCursorT: (t: number | null) => void;
   setPlaying: (v: boolean) => void;
   togglePlay: () => void;
-  setPlaySpeed: (s: PlaySpeed) => void;
+  setPlayDuration: (s: PlayDuration) => void;
 }
 
 const ALL_LAYERS: LayerId[] = [
@@ -105,7 +108,7 @@ export const useMapStore = create<MapState>((set) => ({
   sourceFilter: new Set(ALL_SOURCES),
   cursorT: null,
   playing: false,
-  playSpeed: 10,
+  playDuration: 10,
 
   addSpot: (e) => set((st) => ({ events: [...st.events, e] })),
   addAlert: (a) => set((st) => ({ alerts: [...st.alerts, a] })),
@@ -152,7 +155,7 @@ export const useMapStore = create<MapState>((set) => ({
   setCursorT: (t) => set({ cursorT: t }),
   setPlaying: (v) => set({ playing: v }),
   togglePlay: () => set((st) => ({ playing: !st.playing })),
-  setPlaySpeed: (s) => set({ playSpeed: s }),
+  setPlayDuration: (s) => set({ playDuration: s }),
 }));
 
 export function passesSpotFilter(
