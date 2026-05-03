@@ -176,8 +176,6 @@ export default function MapCanvas() {
   const visibleLayers = useMapStore((s) => s.visibleLayers);
   const chatOpen = useMapStore((s) => s.chatOpen);
   const spotDisplayMode = useMapStore((s) => s.spotDisplayMode);
-  const timeMin = useMapStore((s) => s.timeMin);
-  const timeMax = useMapStore((s) => s.timeMax);
   const severityFilter = useMapStore((s) => s.severityFilter);
   const sourceFilter = useMapStore((s) => s.sourceFilter);
   const cursorT = useMapStore((s) => s.cursorT);
@@ -186,21 +184,19 @@ export default function MapCanvas() {
     () =>
       allEvents.filter((e) =>
         passesSpotFilter(e, {
-          timeMin,
-          timeMax,
           severityFilter,
           sourceFilter,
           cursorT,
         }),
       ),
-    [allEvents, timeMin, timeMax, severityFilter, sourceFilter, cursorT],
+    [allEvents, severityFilter, sourceFilter, cursorT],
   );
   const alerts = useMemo(
     () =>
       allAlerts.filter((a) =>
-        passesAlertFilter(a, { timeMin, timeMax, severityFilter, cursorT }),
+        passesAlertFilter(a, { severityFilter, cursorT }),
       ),
-    [allAlerts, timeMin, timeMax, severityFilter, cursorT],
+    [allAlerts, severityFilter, cursorT],
   );
   const markersRef = useRef<Map<string, maplibregl.Marker>>(new Map());
   const sensorPulseRef = useRef<Map<string, maplibregl.Marker>>(new Map());

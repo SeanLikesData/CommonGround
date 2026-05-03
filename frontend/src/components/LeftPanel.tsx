@@ -29,11 +29,7 @@ export default function LeftPanel() {
   const spotCount = useMapStore((s) => s.events.length);
   const memoryCount = useMapStore((s) => s.memory.length);
   const filtersDirty = useMapStore(
-    (s) =>
-      s.timeMin !== null ||
-      s.timeMax !== null ||
-      s.severityFilter.size !== 4 ||
-      s.sourceFilter.size !== 5,
+    (s) => s.severityFilter.size !== 4 || s.sourceFilter.size !== 5,
   );
 
   const draggingRef = useRef(false);

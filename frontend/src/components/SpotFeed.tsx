@@ -41,13 +41,11 @@ export default function SpotFeed() {
   const events = useMapStore((s) => s.events);
   const selection = useMapStore((s) => s.selection);
   const setSelection = useMapStore((s) => s.setSelection);
-  const timeMin = useMapStore((s) => s.timeMin);
-  const timeMax = useMapStore((s) => s.timeMax);
   const severityFilter = useMapStore((s) => s.severityFilter);
   const sourceFilter = useMapStore((s) => s.sourceFilter);
   const cursorT = useMapStore((s) => s.cursorT);
 
-  const filterState = { timeMin, timeMax, severityFilter, sourceFilter, cursorT };
+  const filterState = { severityFilter, sourceFilter, cursorT };
   const sorted = events
     .filter((e) => passesSpotFilter(e, filterState))
     .sort((a, b) => b.t - a.t);

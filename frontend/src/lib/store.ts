@@ -48,8 +48,6 @@ interface MapState {
   leftPanelWidth: number;
   autoFlyToAlerts: boolean;
   spotDisplayMode: SpotDisplayMode;
-  timeMin: number | null;
-  timeMax: number | null;
   severityFilter: Set<Severity>;
   sourceFilter: Set<SpotSource>;
   // Playback cursor: when non-null, events with t > cursorT are hidden
@@ -70,7 +68,6 @@ interface MapState {
   setLeftPanelWidth: (w: number) => void;
   setAutoFlyToAlerts: (v: boolean) => void;
   setSpotDisplayMode: (m: SpotDisplayMode) => void;
-  setTimeRange: (min: number | null, max: number | null) => void;
   toggleSeverityFilter: (s: Severity) => void;
   toggleSourceFilter: (s: SpotSource) => void;
   resetFilters: () => void;
@@ -102,8 +99,6 @@ export const useMapStore = create<MapState>((set) => ({
   leftPanelWidth: DEFAULT_LEFT_PANEL_WIDTH,
   autoFlyToAlerts: true,
   spotDisplayMode: "merge",
-  timeMin: null,
-  timeMax: null,
   severityFilter: new Set(ALL_SEVERITIES),
   sourceFilter: new Set(ALL_SOURCES),
   cursorT: null,
@@ -130,7 +125,6 @@ export const useMapStore = create<MapState>((set) => ({
     set({ leftPanelWidth: Math.max(MIN_LEFT_PANEL_WIDTH, w) }),
   setAutoFlyToAlerts: (v) => set({ autoFlyToAlerts: v }),
   setSpotDisplayMode: (m) => set({ spotDisplayMode: m }),
-  setTimeRange: (min, max) => set({ timeMin: min, timeMax: max }),
   toggleSeverityFilter: (s) =>
     set((st) => {
       const next = new Set(st.severityFilter);
@@ -147,8 +141,6 @@ export const useMapStore = create<MapState>((set) => ({
     }),
   resetFilters: () =>
     set({
-      timeMin: null,
-      timeMax: null,
       severityFilter: new Set(ALL_SEVERITIES),
       sourceFilter: new Set(ALL_SOURCES),
     }),
@@ -160,14 +152,9 @@ export const useMapStore = create<MapState>((set) => ({
 
 export function passesSpotFilter(
   e: SpotEvent,
-  state: Pick<
-    MapState,
-    "timeMin" | "timeMax" | "severityFilter" | "sourceFilter" | "cursorT"
-  >,
+  state: Pick<MapState, "severityFilter" | "sourceFilter" | "cursorT">,
 ): boolean {
   if (state.cursorT !== null && e.t > state.cursorT) return false;
-  if (state.timeMin !== null && e.t < state.timeMin) return false;
-  if (state.timeMax !== null && e.t > state.timeMax) return false;
   if (!state.severityFilter.has(e.severity)) return false;
   if (!state.sourceFilter.has(e.source)) return false;
   return true;
@@ -175,11 +162,9 @@ export function passesSpotFilter(
 
 export function passesAlertFilter(
   a: AlertEvent,
-  state: Pick<MapState, "timeMin" | "timeMax" | "severityFilter" | "cursorT">,
+  state: Pick<MapState, "severityFilter" | "cursorT">,
 ): boolean {
   if (state.cursorT !== null && a.t > state.cursorT) return false;
-  if (state.timeMin !== null && a.t < state.timeMin) return false;
-  if (state.timeMax !== null && a.t > state.timeMax) return false;
   if (!state.severityFilter.has(a.severity)) return false;
   return true;
 }
