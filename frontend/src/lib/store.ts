@@ -29,7 +29,6 @@ interface MapState {
   leftPanel: LeftPanelId | null;
   leftPanelWidth: number;
   autoFlyToAlerts: boolean;
-  showWatermark: boolean;
   spotDisplayMode: SpotDisplayMode;
 
   addSpot: (e: SpotEvent) => void;
@@ -43,7 +42,6 @@ interface MapState {
   closeLeftPanel: () => void;
   setLeftPanelWidth: (w: number) => void;
   setAutoFlyToAlerts: (v: boolean) => void;
-  setShowWatermark: (v: boolean) => void;
   setSpotDisplayMode: (m: SpotDisplayMode) => void;
 }
 
@@ -68,7 +66,6 @@ export const useMapStore = create<MapState>((set) => ({
   leftPanel: "alerts",
   leftPanelWidth: DEFAULT_LEFT_PANEL_WIDTH,
   autoFlyToAlerts: true,
-  showWatermark: true,
   spotDisplayMode: "merge",
 
   addSpot: (e) => set((st) => ({ events: [...st.events, e] })),
@@ -90,6 +87,5 @@ export const useMapStore = create<MapState>((set) => ({
   setLeftPanelWidth: (w) =>
     set({ leftPanelWidth: Math.max(MIN_LEFT_PANEL_WIDTH, w) }),
   setAutoFlyToAlerts: (v) => set({ autoFlyToAlerts: v }),
-  setShowWatermark: (v) => set({ showWatermark: v }),
   setSpotDisplayMode: (m) => set({ spotDisplayMode: m }),
 }));

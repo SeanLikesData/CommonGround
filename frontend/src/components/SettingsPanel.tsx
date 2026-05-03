@@ -77,8 +77,6 @@ function SectionHeader({ children }: { children: React.ReactNode }) {
 export default function SettingsPanel() {
   const autoFly = useMapStore((s) => s.autoFlyToAlerts);
   const setAutoFly = useMapStore((s) => s.setAutoFlyToAlerts);
-  const showWatermark = useMapStore((s) => s.showWatermark);
-  const setShowWatermark = useMapStore((s) => s.setShowWatermark);
   const spotMode = useMapStore((s) => s.spotDisplayMode);
   const setSpotMode = useMapStore((s) => s.setSpotDisplayMode);
 
@@ -144,14 +142,6 @@ export default function SettingsPanel() {
       >
         Reset view
       </button>
-
-      <SectionHeader>Display</SectionHeader>
-      <Toggle
-        on={showWatermark}
-        onChange={setShowWatermark}
-        label="Show training watermark"
-        hint="Synthetic-data badge in the top-left corner."
-      />
 
       <SectionHeader>About</SectionHeader>
       <div className="px-2 py-1 text-[11px] leading-relaxed text-zinc-500">
