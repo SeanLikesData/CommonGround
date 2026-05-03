@@ -41,32 +41,39 @@ HEURISTICS: dict[str, str] = {
     "multi_int_corroboration": """
         MATCH (r:Report)-[:OBSERVED_AT]->(:Location)-[:WITHIN]->(reg:Region)
         WHERE r.created_at > datetime($since)
-        WITH reg, collect(DISTINCT r.modality) AS mods, count(r) AS n
+        WITH reg, collect(DISTINCT r.modality) AS mods, count(r) AS n,
+             collect(r.id)[..30] AS report_ids,
+             min(r.created_at) AS first_seen,
+             max(r.created_at) AS latest
         WHERE size(mods) >= 2
         RETURN reg.geohash AS geohash, reg.lat AS lat, reg.lon AS lon,
-               mods, n AS reports
+               mods, n AS reports, report_ids, first_seen, latest
         ORDER BY size(mods) DESC, n DESC LIMIT 10
     """,
     "first_contact": """
         MATCH (r:Report)-[:OBSERVED_AT]->(:Location)-[:WITHIN]->(reg:Region)
         WHERE r.created_at > datetime($since)
         WITH reg, count(r) AS recent, collect(DISTINCT r.modality) AS mods,
+             collect(r.id)[..30] AS report_ids,
              min(r.created_at) AS first_seen
         OPTIONAL MATCH (r2:Report)-[:OBSERVED_AT]->(:Location)-[:WITHIN]->(reg)
         WHERE r2.created_at <= datetime($since) AND r2.created_at > datetime($baseline_start)
-        WITH reg, recent, mods, first_seen, count(r2) AS prior
+        WITH reg, recent, mods, report_ids, first_seen, count(r2) AS prior
         WHERE prior = 0
         RETURN reg.geohash AS geohash, reg.lat AS lat, reg.lon AS lon,
-               recent, mods, first_seen
+               recent, mods, report_ids, first_seen
         ORDER BY first_seen DESC LIMIT 15
     """,
     "force_concentration": """
         MATCH (r:Report)-[:OBSERVED_AT]->(:Location)-[:WITHIN]->(reg:Region)
         WHERE r.created_at > datetime($since)
-        WITH reg, count(r) AS n, collect(DISTINCT r.modality) AS mods
+        WITH reg, count(r) AS n, collect(DISTINCT r.modality) AS mods,
+             collect(r.id)[..30] AS report_ids,
+             min(r.created_at) AS first_seen,
+             max(r.created_at) AS latest
         WHERE n >= 3
         RETURN reg.geohash AS geohash, reg.lat AS lat, reg.lon AS lon,
-               n AS reports, mods
+               n AS reports, mods, report_ids, first_seen, latest
         ORDER BY n DESC LIMIT 10
     """,
     "modality_shift": """

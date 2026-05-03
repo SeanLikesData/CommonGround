@@ -5,6 +5,7 @@ from typing import Optional
 from pydantic_ai import Agent
 
 from agent import build_agent
+from alerts import derive_alerts, persist_alerts
 from graph import run_heuristics
 
 log = logging.getLogger(__name__)
@@ -30,12 +31,17 @@ async def run_once(recent_window_sec: int, baseline_window_sec: int) -> None:
     data = run_heuristics(recent_window_sec, baseline_window_sec)
 
     nonempty = {k: v for k, v in data.items() if v}
+
+    derived = derive_alerts(data)
+
     if not nonempty:
         log.info("no heuristic findings; skipping LLM call")
+        persist_alerts(derived, reasoning=None)
         return
 
     if data == _last_heuristics:
         log.info("heuristics unchanged from last cycle; skipping LLM call")
+        persist_alerts(derived, reasoning=None)
         return
     _last_heuristics = data
 
@@ -47,3 +53,4 @@ async def run_once(recent_window_sec: int, baseline_window_sec: int) -> None:
 
     result = await _get_agent().run(user_msg)
     log.info("sitrep:\n%s", result.output)
+    persist_alerts(derived, reasoning=result.output)
