@@ -44,6 +44,8 @@ services:
     build: ./data-streaming
     environment:
       - MONGODB_URI=mongodb://mongo:27017/commonground
+      - SCENARIO=${SCENARIO:-}
+      - TIME_SCALE=${TIME_SCALE:-1.0}
     depends_on:
       - mongo
     restart: unless-stopped

@@ -59,6 +59,14 @@ const SEVERITY_BY_THREAT: Record<string, Severity> = {
 let epochMs: number | null = null;
 let latestSignalMs = 0;
 
+function truncate(text: string, max: number): string {
+  const trimmed = text.trim();
+  if (trimmed.length <= max) return trimmed;
+  const slice = trimmed.slice(0, max);
+  const lastSpace = slice.lastIndexOf(" ");
+  return `${slice.slice(0, lastSpace > 0 ? lastSpace : max).trimEnd()}…`;
+}
+
 function buildSaluteFromFields(sp: ApiSpotReport): string {
   const parts: string[] = [];
   if (sp.size) parts.push(`S: ${sp.size}`);
@@ -84,10 +92,9 @@ function mapReport(r: ApiReport): SpotEvent | null {
   const sp = r.spot_report;
   const severity: Severity =
     (sp?.threat_level && SEVERITY_BY_THREAT[sp.threat_level]) ?? "low";
-  const salute =
-    sp?.narrative ||
-    (sp ? buildSaluteFromFields(sp) : "") ||
-    `${r.modality} signal`;
+  const structured = sp ? buildSaluteFromFields(sp) : "";
+  const salute = structured || sp?.narrative || `${r.modality} signal`;
+  const quote = structured && sp?.narrative ? truncate(sp.narrative, 180) : undefined;
 
   return {
     id: r._id,
@@ -97,6 +104,7 @@ function mapReport(r: ApiReport): SpotEvent | null {
     source,
     sensorId: r.signal.sensor_id,
     salute,
+    quote,
   };
 }
 
