@@ -16,8 +16,9 @@ export default function AlertFeed() {
   const timeMin = useMapStore((s) => s.timeMin);
   const timeMax = useMapStore((s) => s.timeMax);
   const severityFilter = useMapStore((s) => s.severityFilter);
+  const cursorT = useMapStore((s) => s.cursorT);
 
-  const filterState = { timeMin, timeMax, severityFilter };
+  const filterState = { timeMin, timeMax, severityFilter, cursorT };
   const sorted = alerts
     .filter((a) => passesAlertFilter(a, filterState))
     .sort((a, b) => b.t - a.t);

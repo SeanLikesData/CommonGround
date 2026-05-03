@@ -180,6 +180,7 @@ export default function MapCanvas() {
   const timeMax = useMapStore((s) => s.timeMax);
   const severityFilter = useMapStore((s) => s.severityFilter);
   const sourceFilter = useMapStore((s) => s.sourceFilter);
+  const cursorT = useMapStore((s) => s.cursorT);
 
   const events = useMemo(
     () =>
@@ -189,16 +190,17 @@ export default function MapCanvas() {
           timeMax,
           severityFilter,
           sourceFilter,
+          cursorT,
         }),
       ),
-    [allEvents, timeMin, timeMax, severityFilter, sourceFilter],
+    [allEvents, timeMin, timeMax, severityFilter, sourceFilter, cursorT],
   );
   const alerts = useMemo(
     () =>
       allAlerts.filter((a) =>
-        passesAlertFilter(a, { timeMin, timeMax, severityFilter }),
+        passesAlertFilter(a, { timeMin, timeMax, severityFilter, cursorT }),
       ),
-    [allAlerts, timeMin, timeMax, severityFilter],
+    [allAlerts, timeMin, timeMax, severityFilter, cursorT],
   );
   const markersRef = useRef<Map<string, maplibregl.Marker>>(new Map());
   const sensorPulseRef = useRef<Map<string, maplibregl.Marker>>(new Map());
