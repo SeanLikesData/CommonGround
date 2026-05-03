@@ -21,14 +21,21 @@ const GEOJSON_URL = "/geojson/ao-lionheart.geojson";
 // Window over which a SPOT report fades from "fresh" to "stale" (in scenario seconds).
 const RECENCY_WINDOW_SEC = 1800;
 
-function spotsToFeatureCollection(spots: SpotEvent[], scenarioTime: number) {
+function spotsToFeatureCollection(
+  spots: SpotEvent[],
+  scenarioTime: number,
+  live: boolean,
+) {
   const latestT = spots.reduce((m, s) => (s.t > m ? s.t : m), 0);
   const now = Math.max(scenarioTime, latestT);
   return {
     type: "FeatureCollection" as const,
     features: spots.map((s) => {
-      const age = Math.max(0, now - s.t);
-      const recency = Math.max(0, Math.min(1, 1 - age / RECENCY_WINDOW_SEC));
+      // Live mode shows the AO's current state — every SPOT is "current", so
+      // no fade. Replay fades older reports as scenarioTime advances.
+      const recency = live
+        ? 1
+        : Math.max(0, Math.min(1, 1 - Math.max(0, now - s.t) / RECENCY_WINDOW_SEC));
       return {
         type: "Feature" as const,
         properties: {
@@ -71,6 +78,7 @@ export default function MapCanvas() {
   const setSelection = useMapStore((s) => s.setSelection);
   const visibleLayers = useMapStore((s) => s.visibleLayers);
   const scenarioTime = useMapStore((s) => s.scenarioTime);
+  const view = useMapStore((s) => s.view);
   const markersRef = useRef<Map<string, maplibregl.Marker>>(new Map());
 
   useEffect(() => {
@@ -322,9 +330,9 @@ export default function MapCanvas() {
               ["linear"],
               ["get", "recency"],
               0,
-              9,
+              10,
               1,
-              14,
+              16,
             ],
             "circle-color": severityMatch,
             "circle-opacity": [
@@ -332,9 +340,9 @@ export default function MapCanvas() {
               ["linear"],
               ["get", "recency"],
               0,
-              0.12,
+              0.18,
               1,
-              0.55,
+              0.65,
             ],
             "circle-stroke-color": "#0f172a",
             "circle-stroke-width": 1,
@@ -363,7 +371,7 @@ export default function MapCanvas() {
               "■",
               "●",
             ],
-            "text-size": 16,
+            "text-size": 20,
             "text-allow-overlap": true,
             "text-ignore-placement": true,
           },
@@ -378,7 +386,7 @@ export default function MapCanvas() {
               severityMatch,
             ],
             "text-halo-color": "#0f172a",
-            "text-halo-width": 1.6,
+            "text-halo-width": 2,
           },
         });
 
@@ -451,10 +459,10 @@ export default function MapCanvas() {
     const src = map.getSource("spots");
     if (src && "setData" in src) {
       (src as maplibregl.GeoJSONSource).setData(
-        spotsToFeatureCollection(events, scenarioTime),
+        spotsToFeatureCollection(events, scenarioTime, view === "live"),
       );
     }
-  }, [events, scenarioTime, styleReady]);
+  }, [events, scenarioTime, view, styleReady]);
 
   // Update connection lines whenever alerts or events change.
   useEffect(() => {
