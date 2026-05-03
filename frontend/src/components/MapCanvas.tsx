@@ -236,6 +236,12 @@ export default function MapCanvas() {
     mapRef.current = map;
     setMapInstance(map);
 
+    const attribEl = map
+      .getContainer()
+      .querySelector(".maplibregl-ctrl-attrib");
+    attribEl?.classList.remove("maplibregl-compact-show");
+    attribEl?.removeAttribute("open");
+
     map.addControl(
       new maplibregl.NavigationControl({ showCompass: true }),
       "bottom-right",
