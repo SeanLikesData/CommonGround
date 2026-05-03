@@ -32,6 +32,10 @@ const LABEL_COLORS: Record<string, string> = {
   Sensor: "#f8fafc",
   Signal: "#22d3ee",
   Report: "#34d399",
+  // Graphiti-extracted semantic nodes
+  Entity: "#f472b6",
+  Episodic: "#60a5fa",
+  Community: "#fbbf24",
 };
 
 function colorFor(label: string): string {
@@ -65,9 +69,108 @@ function displayName(n: GraphNode): string {
           : "";
       return narrative ? `${mod}: ${narrative}` : mod;
     }
+    case "Entity":
+      return String(p.name ?? p.summary ?? shortId(n.id));
+    case "Episodic":
+      return String(p.name ?? p.source ?? shortId(n.id));
+    case "Community":
+      return String(p.name ?? p.summary ?? shortId(n.id));
     default:
-      return shortId(n.id);
+      return String(p.name ?? shortId(n.id));
   }
+}
+
+function escHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+function fmtCoord(lat: unknown, lon: unknown): string | null {
+  const la = typeof lat === "number" ? lat : Number(lat);
+  const lo = typeof lon === "number" ? lon : Number(lon);
+  if (!Number.isFinite(la) || !Number.isFinite(lo)) return null;
+  return `${la.toFixed(3)}°, ${lo.toFixed(3)}°`;
+}
+
+function trunc(s: string, n: number): string {
+  return s.length > n ? s.slice(0, n) + "…" : s;
+}
+
+// Returns HTML rendered by react-force-graph-2d's tooltip layer.
+function tooltipFor(n: GraphNode): string {
+  const p = n.props;
+  const title = `<div style="font-weight:600;color:${colorFor(n.label)};font-size:11px;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:2px;">${escHtml(n.label)}</div>`;
+  const lines: string[] = [];
+
+  switch (n.label) {
+    case "Location":
+    case "Region": {
+      if (p.geohash) lines.push(`<div><b>geohash</b> ${escHtml(String(p.geohash))}</div>`);
+      const c = fmtCoord(p.lat, p.lon);
+      if (c) lines.push(`<div>${c}</div>`);
+      break;
+    }
+    case "Modality":
+      if (p.name) lines.push(`<div>${escHtml(String(p.name).toUpperCase())}</div>`);
+      break;
+    case "Sensor": {
+      if (p.id) lines.push(`<div><b>id</b> ${escHtml(String(p.id))}</div>`);
+      if (p.modality) lines.push(`<div><b>modality</b> ${escHtml(String(p.modality))}</div>`);
+      if (p.last_seen_at)
+        lines.push(`<div><b>last seen</b> ${escHtml(String(p.last_seen_at))}</div>`);
+      break;
+    }
+    case "Signal": {
+      if (p.modality) lines.push(`<div><b>modality</b> ${escHtml(String(p.modality))}</div>`);
+      if (p.timestamp) lines.push(`<div><b>at</b> ${escHtml(String(p.timestamp))}</div>`);
+      if (p.id) lines.push(`<div><b>id</b> ${escHtml(shortId(String(p.id)))}</div>`);
+      break;
+    }
+    case "Report": {
+      if (p.modality) lines.push(`<div><b>modality</b> ${escHtml(String(p.modality))}</div>`);
+      if (p.created_at) lines.push(`<div><b>at</b> ${escHtml(String(p.created_at))}</div>`);
+      if (typeof p.narrative === "string" && p.narrative)
+        lines.push(
+          `<div style="margin-top:4px;max-width:320px;white-space:normal;">${escHtml(trunc(p.narrative, 240))}</div>`,
+        );
+      break;
+    }
+    case "Entity": {
+      if (p.name) lines.push(`<div><b>${escHtml(String(p.name))}</b></div>`);
+      if (typeof p.summary === "string" && p.summary)
+        lines.push(
+          `<div style="margin-top:2px;max-width:320px;white-space:normal;">${escHtml(trunc(p.summary, 240))}</div>`,
+        );
+      break;
+    }
+    case "Episodic": {
+      if (p.name) lines.push(`<div><b>${escHtml(String(p.name))}</b></div>`);
+      if (p.source) lines.push(`<div><b>source</b> ${escHtml(String(p.source))}</div>`);
+      if (typeof p.content === "string" && p.content)
+        lines.push(
+          `<div style="margin-top:2px;max-width:320px;white-space:normal;">${escHtml(trunc(p.content, 200))}</div>`,
+        );
+      break;
+    }
+    case "Community": {
+      if (p.name) lines.push(`<div><b>${escHtml(String(p.name))}</b></div>`);
+      if (typeof p.summary === "string" && p.summary)
+        lines.push(
+          `<div style="margin-top:2px;max-width:320px;white-space:normal;">${escHtml(trunc(p.summary, 200))}</div>`,
+        );
+      break;
+    }
+    default: {
+      const fallback = displayName(n);
+      if (fallback) lines.push(`<div>${escHtml(fallback)}</div>`);
+    }
+  }
+
+  if (lines.length === 0) lines.push(`<div>${escHtml(displayName(n))}</div>`);
+
+  return `<div style="font-family:ui-sans-serif,system-ui,sans-serif;font-size:12px;line-height:1.4;color:#e2e8f0;background:rgba(9,9,11,0.95);border:1px solid rgba(63,63,70,0.8);border-radius:4px;padding:6px 8px;">${title}${lines.join("")}</div>`;
 }
 
 export default function GraphView() {
@@ -194,10 +297,7 @@ export default function GraphView() {
               nodeRelSize={4}
               nodeVal={(n) => 1 + Math.sqrt((n as GraphNode).degree ?? 0)}
               nodeColor={(n) => colorFor((n as GraphNode).label)}
-              nodeLabel={(n) => {
-                const node = n as GraphNode;
-                return `${node.label}: ${displayName(node)}`;
-              }}
+              nodeLabel={(n) => tooltipFor(n as GraphNode)}
               linkColor={() => "rgba(148,163,184,0.35)"}
               linkDirectionalArrowLength={3}
               linkDirectionalArrowRelPos={1}
