@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef } from "react";
 import AlertFeed from "@/components/AlertFeed";
 import FiltersPanel from "@/components/FiltersPanel";
+import FlowDiagram from "@/components/FlowDiagram";
 import GraphView from "@/components/GraphView";
 import MemoryView from "@/components/MemoryView";
 import SettingsPanel from "@/components/SettingsPanel";
@@ -17,6 +18,7 @@ const TITLES: Record<LeftPanelId, string> = {
   filters: "Filters & layers",
   graph: "Knowledge graph",
   memory: "Memory",
+  flow: "Architecture flow",
   settings: "Settings",
 };
 
@@ -114,6 +116,7 @@ export default function LeftPanel() {
         {active === "filters" && <FiltersPanel />}
         {active === "graph" && <GraphView />}
         {active === "memory" && <MemoryView />}
+        {active === "flow" && <FlowDiagram />}
         {active === "settings" && <SettingsPanel />}
       </div>
       <div
