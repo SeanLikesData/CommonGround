@@ -4,18 +4,10 @@ import { useMapStore } from "./store";
 
 const LIVE_SEED_TAPES = ["/tapes/wadi-hamrin.jsonl", "/tapes/patrol-hvs.jsonl"];
 
-// In Live mode (no replay scenario active), eagerly load every seeded tape and
-// dump its SPOTs/alerts/memories into the store as the AO's current state.
-// Without this, sensors and the map have no historical activity to show.
+// Pulls every seeded tape and dumps its SPOTs/alerts/memories into the store as
+// the AO's current state. Stand-in for a real /spots feed off Mongo.
 export function useLiveSeed() {
-  const view = useMapStore((s) => s.view);
-  const scenario = useMapStore((s) => s.scenario);
-
   useEffect(() => {
-    // Replay tab is driven by the tape player; everywhere else we want the
-    // seed data available so the map / graph / memory tabs are populated.
-    if (view === "replay") return;
-    if (scenario !== null) return;
     let cancelled = false;
 
     Promise.all(LIVE_SEED_TAPES.map((url) => new TapeSource(url).load()))
@@ -46,5 +38,5 @@ export function useLiveSeed() {
     return () => {
       cancelled = true;
     };
-  }, [view, scenario]);
+  }, []);
 }

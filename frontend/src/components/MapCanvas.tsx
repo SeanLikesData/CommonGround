@@ -18,36 +18,19 @@ import type { AlertEvent, SpotEvent } from "@/lib/types";
 
 const GEOJSON_URL = "/geojson/ao-lionheart.geojson";
 
-// Window over which a SPOT report fades from "fresh" to "stale" (in scenario seconds).
-const RECENCY_WINDOW_SEC = 1800;
-
-function spotsToFeatureCollection(
-  spots: SpotEvent[],
-  scenarioTime: number,
-  live: boolean,
-) {
-  const latestT = spots.reduce((m, s) => (s.t > m ? s.t : m), 0);
-  const now = Math.max(scenarioTime, latestT);
+function spotsToFeatureCollection(spots: SpotEvent[]) {
   return {
     type: "FeatureCollection" as const,
-    features: spots.map((s) => {
-      // Live mode shows the AO's current state — every SPOT is "current", so
-      // no fade. Replay fades older reports as scenarioTime advances.
-      const recency = live
-        ? 1
-        : Math.max(0, Math.min(1, 1 - Math.max(0, now - s.t) / RECENCY_WINDOW_SEC));
-      return {
-        type: "Feature" as const,
-        properties: {
-          id: s.id,
-          severity: s.severity,
-          source: s.source,
-          salute: s.salute,
-          recency,
-        },
-        geometry: { type: "Point" as const, coordinates: s.location },
-      };
-    }),
+    features: spots.map((s) => ({
+      type: "Feature" as const,
+      properties: {
+        id: s.id,
+        severity: s.severity,
+        source: s.source,
+        salute: s.salute,
+      },
+      geometry: { type: "Point" as const, coordinates: s.location },
+    })),
   };
 }
 
@@ -77,8 +60,6 @@ export default function MapCanvas() {
   const alerts = useMapStore((s) => s.alerts);
   const setSelection = useMapStore((s) => s.setSelection);
   const visibleLayers = useMapStore((s) => s.visibleLayers);
-  const scenarioTime = useMapStore((s) => s.scenarioTime);
-  const view = useMapStore((s) => s.view);
   const markersRef = useRef<Map<string, maplibregl.Marker>>(new Map());
 
   useEffect(() => {
@@ -306,7 +287,7 @@ export default function MapCanvas() {
           data: { type: "FeatureCollection", features: [] },
         });
 
-        // SPOT halo: severity-colored, fades and shrinks as the report ages.
+        // SPOT halo: severity-colored disc behind the glyph.
         const severityMatch: maplibregl.ExpressionSpecification = [
           "match",
           ["get", "severity"],
@@ -325,32 +306,16 @@ export default function MapCanvas() {
           type: "circle",
           source: "spots",
           paint: {
-            "circle-radius": [
-              "interpolate",
-              ["linear"],
-              ["get", "recency"],
-              0,
-              10,
-              1,
-              16,
-            ],
+            "circle-radius": 16,
             "circle-color": severityMatch,
-            "circle-opacity": [
-              "interpolate",
-              ["linear"],
-              ["get", "recency"],
-              0,
-              0.18,
-              1,
-              0.65,
-            ],
+            "circle-opacity": 0.65,
             "circle-stroke-color": "#0f172a",
             "circle-stroke-width": 1,
             "circle-stroke-opacity": 0.5,
           },
         });
 
-        // SPOT glyph: shape encodes the reporter type, color tracks recency × severity.
+        // SPOT glyph: shape encodes the reporter type, color tracks severity.
         map.addLayer({
           id: "spots-layer",
           type: "symbol",
@@ -376,15 +341,7 @@ export default function MapCanvas() {
             "text-ignore-placement": true,
           },
           paint: {
-            "text-color": [
-              "interpolate",
-              ["linear"],
-              ["get", "recency"],
-              0,
-              "#94a3b8",
-              1,
-              severityMatch,
-            ],
+            "text-color": severityMatch,
             "text-halo-color": "#0f172a",
             "text-halo-width": 2,
           },
@@ -452,17 +409,15 @@ export default function MapCanvas() {
     };
   }, [setSelection]);
 
-  // Push events into the spots source whenever they (or scenario time) change.
+  // Push events into the spots source whenever they change.
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !styleReady) return;
     const src = map.getSource("spots");
     if (src && "setData" in src) {
-      (src as maplibregl.GeoJSONSource).setData(
-        spotsToFeatureCollection(events, scenarioTime, view === "live"),
-      );
+      (src as maplibregl.GeoJSONSource).setData(spotsToFeatureCollection(events));
     }
-  }, [events, scenarioTime, view, styleReady]);
+  }, [events, styleReady]);
 
   // Update connection lines whenever alerts or events change.
   useEffect(() => {

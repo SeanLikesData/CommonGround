@@ -24,8 +24,3 @@ export class TapeSource implements EventSource {
     });
   }
 }
-
-export function pickSource(scenario: "wadi_hamrin" | "patrol_hvs"): EventSource {
-  const url = scenario === "patrol_hvs" ? "/tapes/patrol-hvs.jsonl" : "/tapes/wadi-hamrin.jsonl";
-  return new TapeSource(url);
-}

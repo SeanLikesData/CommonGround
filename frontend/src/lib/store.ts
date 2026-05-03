@@ -7,37 +7,26 @@ import type {
   SpotEvent,
 } from "./types";
 
-type Scenario = "wadi_hamrin" | "patrol_hvs" | null;
-
-export type View = "live" | "replay" | "graph" | "memory";
+export type View = "live" | "graph" | "memory";
 
 interface MapState {
   view: View;
-  scenario: Scenario;
   events: SpotEvent[];
   alerts: AlertEvent[];
   memory: MemoryEntry[];
   selection: Selection;
-  scenarioTime: number;
-  playing: boolean;
-  speed: 1 | 10 | 100;
   visibleLayers: Set<LayerId>;
   chatOpen: boolean;
   chatPrefill: string;
 
   setView: (v: View) => void;
-  setScenario: (s: Scenario) => void;
   addSpot: (e: SpotEvent) => void;
   addAlert: (a: AlertEvent) => void;
   addMemory: (m: MemoryEntry) => void;
   setSelection: (s: Selection) => void;
-  setScenarioTime: (t: number) => void;
-  setPlaying: (p: boolean) => void;
-  setSpeed: (s: 1 | 10 | 100) => void;
   toggleLayer: (id: LayerId) => void;
   openChat: (prefill?: string) => void;
   closeChat: () => void;
-  reset: () => void;
 }
 
 const ALL_LAYERS: LayerId[] = [
@@ -52,53 +41,19 @@ const ALL_LAYERS: LayerId[] = [
 
 export const useMapStore = create<MapState>((set) => ({
   view: "live",
-  scenario: null,
   events: [],
   alerts: [],
   memory: [],
   selection: null,
-  scenarioTime: 0,
-  playing: false,
-  speed: 10,
   visibleLayers: new Set(ALL_LAYERS),
   chatOpen: false,
   chatPrefill: "",
 
-  setView: (v) =>
-    set((st) => {
-      // Only wipe state when moving in/out of replay, since live/graph/memory
-      // all share the live-seeded data set.
-      const crossesReplayBoundary =
-        (st.view === "replay") !== (v === "replay");
-      if (!crossesReplayBoundary) return { view: v };
-      return {
-        view: v,
-        scenario: null,
-        events: [],
-        alerts: [],
-        memory: [],
-        selection: null,
-        scenarioTime: 0,
-        playing: false,
-      };
-    }),
-  setScenario: (s) =>
-    set({
-      scenario: s,
-      events: [],
-      alerts: [],
-      memory: [],
-      selection: null,
-      scenarioTime: 0,
-      playing: s !== null,
-    }),
+  setView: (v) => set({ view: v }),
   addSpot: (e) => set((st) => ({ events: [...st.events, e] })),
   addAlert: (a) => set((st) => ({ alerts: [...st.alerts, a] })),
   addMemory: (m) => set((st) => ({ memory: [...st.memory, m] })),
   setSelection: (s) => set({ selection: s }),
-  setScenarioTime: (t) => set({ scenarioTime: t }),
-  setPlaying: (p) => set({ playing: p }),
-  setSpeed: (s) => set({ speed: s }),
   toggleLayer: (id) =>
     set((st) => {
       const next = new Set(st.visibleLayers);
@@ -108,13 +63,4 @@ export const useMapStore = create<MapState>((set) => ({
     }),
   openChat: (prefill = "") => set({ chatOpen: true, chatPrefill: prefill }),
   closeChat: () => set({ chatOpen: false, chatPrefill: "" }),
-  reset: () =>
-    set({
-      events: [],
-      alerts: [],
-      memory: [],
-      selection: null,
-      scenarioTime: 0,
-      playing: false,
-    }),
 }));

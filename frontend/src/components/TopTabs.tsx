@@ -2,7 +2,6 @@ import { useMapStore, type View } from "@/lib/store";
 
 const TABS: { id: View; label: string }[] = [
   { id: "live", label: "Live" },
-  { id: "replay", label: "Replay" },
   { id: "graph", label: "Graph" },
   { id: "memory", label: "Memory" },
 ];

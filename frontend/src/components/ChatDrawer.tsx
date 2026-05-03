@@ -32,7 +32,6 @@ export default function ChatDrawer() {
   const prefill = useMapStore((s) => s.chatPrefill);
   const closeChat = useMapStore((s) => s.closeChat);
   const addMemory = useMapStore((s) => s.addMemory);
-  const scenarioTime = useMapStore((s) => s.scenarioTime);
 
   const [input, setInput] = useState("");
   const [step, setStep] = useState<Step>({ kind: "idle" });
@@ -67,7 +66,7 @@ export default function ChatDrawer() {
     if (step.kind !== "proposed") return;
     addMemory({
       id: `mem-${Date.now()}`,
-      t: scenarioTime,
+      t: Date.now() / 1000,
       kind: step.memoryKind,
       text: step.proposalText,
       source: "analyst",

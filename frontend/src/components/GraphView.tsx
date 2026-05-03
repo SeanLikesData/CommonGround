@@ -228,7 +228,7 @@ export default function GraphView() {
 
         {nodes.length === 0 && (
           <div className="rounded border border-dashed border-zinc-800 px-6 py-12 text-center text-sm text-zinc-500">
-            Graph is empty. Load a scenario or wait for live data.
+            Graph is empty.
           </div>
         )}
       </div>

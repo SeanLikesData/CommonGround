@@ -55,7 +55,6 @@ function SpotRow({ spot, onClick }: { spot: SpotEvent; onClick: () => void }) {
 export default function SensorDetail({ sensorId }: { sensorId: string }) {
   const events = useMapStore((s) => s.events);
   const setSelection = useMapStore((s) => s.setSelection);
-  const scenarioTime = useMapStore((s) => s.scenarioTime);
 
   const observations = events
     .filter((e) => e.sensorId === sensorId)
@@ -63,9 +62,7 @@ export default function SensorDetail({ sensorId }: { sensorId: string }) {
 
   const inferredSource = observations[0]?.source ?? reporterFromSensorId(sensorId);
   const meta = reporterMeta(inferredSource);
-
-  const lastT = observations[0]?.t ?? -Infinity;
-  const recentlyActive = scenarioTime - lastT < 1800 && observations.length > 0;
+  const active = observations.length > 0;
 
   return (
     <div className="flex flex-col gap-3 p-4">
@@ -76,17 +73,17 @@ export default function SensorDetail({ sensorId }: { sensorId: string }) {
         </h2>
         <span
           className={`ml-auto inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider ${
-            recentlyActive
+            active
               ? "bg-emerald-500/20 text-emerald-300"
               : "bg-zinc-800 text-zinc-500"
           }`}
         >
           <span
             className={`inline-block h-1.5 w-1.5 rounded-full ${
-              recentlyActive ? "bg-emerald-400" : "bg-zinc-600"
+              active ? "bg-emerald-400" : "bg-zinc-600"
             }`}
           />
-          {recentlyActive ? "Active" : "Idle"}
+          {active ? "Active" : "Idle"}
         </span>
       </div>
 
