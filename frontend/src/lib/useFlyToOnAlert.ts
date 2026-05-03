@@ -4,10 +4,11 @@ import { useMapStore } from "./store";
 
 export function useFlyToOnAlert() {
   const alerts = useMapStore((s) => s.alerts);
+  const enabled = useMapStore((s) => s.autoFlyToAlerts);
   const lastCount = useRef(0);
 
   useEffect(() => {
-    if (alerts.length > lastCount.current) {
+    if (enabled && alerts.length > lastCount.current) {
       const newest = alerts[alerts.length - 1];
       const map = getMapInstance();
       if (map) {
@@ -15,5 +16,5 @@ export function useFlyToOnAlert() {
       }
     }
     lastCount.current = alerts.length;
-  }, [alerts]);
+  }, [alerts, enabled]);
 }

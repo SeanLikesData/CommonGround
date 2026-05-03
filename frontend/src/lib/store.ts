@@ -8,6 +8,7 @@ import type {
 } from "./types";
 
 export type View = "live" | "graph" | "memory";
+export type LeftPanelId = "alerts" | "layers" | "settings";
 
 interface MapState {
   view: View;
@@ -18,6 +19,9 @@ interface MapState {
   visibleLayers: Set<LayerId>;
   chatOpen: boolean;
   chatPrefill: string;
+  leftPanel: LeftPanelId | null;
+  autoFlyToAlerts: boolean;
+  showWatermark: boolean;
 
   setView: (v: View) => void;
   addSpot: (e: SpotEvent) => void;
@@ -27,6 +31,10 @@ interface MapState {
   toggleLayer: (id: LayerId) => void;
   openChat: (prefill?: string) => void;
   closeChat: () => void;
+  toggleLeftPanel: (id: LeftPanelId) => void;
+  closeLeftPanel: () => void;
+  setAutoFlyToAlerts: (v: boolean) => void;
+  setShowWatermark: (v: boolean) => void;
 }
 
 const ALL_LAYERS: LayerId[] = [
@@ -48,6 +56,9 @@ export const useMapStore = create<MapState>((set) => ({
   visibleLayers: new Set(ALL_LAYERS),
   chatOpen: false,
   chatPrefill: "",
+  leftPanel: "alerts",
+  autoFlyToAlerts: true,
+  showWatermark: true,
 
   setView: (v) => set({ view: v }),
   addSpot: (e) => set((st) => ({ events: [...st.events, e] })),
@@ -63,4 +74,9 @@ export const useMapStore = create<MapState>((set) => ({
     }),
   openChat: (prefill = "") => set({ chatOpen: true, chatPrefill: prefill }),
   closeChat: () => set({ chatOpen: false, chatPrefill: "" }),
+  toggleLeftPanel: (id) =>
+    set((st) => ({ leftPanel: st.leftPanel === id ? null : id })),
+  closeLeftPanel: () => set({ leftPanel: null }),
+  setAutoFlyToAlerts: (v) => set({ autoFlyToAlerts: v }),
+  setShowWatermark: (v) => set({ showWatermark: v }),
 }));

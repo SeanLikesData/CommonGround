@@ -1,0 +1,102 @@
+import { useMapStore, type LeftPanelId } from "@/lib/store";
+
+interface RailItem {
+  id: LeftPanelId;
+  label: string;
+  icon: React.ReactNode;
+}
+
+const ICON_CLASS = "h-5 w-5";
+
+const ITEMS: RailItem[] = [
+  {
+    id: "alerts",
+    label: "Alerts",
+    icon: (
+      <svg
+        className={ICON_CLASS}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={1.7}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M12 3 2.5 20h19L12 3Z" />
+        <path d="M12 10v4" />
+        <path d="M12 17.25v.01" />
+      </svg>
+    ),
+  },
+  {
+    id: "layers",
+    label: "Layers",
+    icon: (
+      <svg
+        className={ICON_CLASS}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={1.7}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="m12 3 9 5-9 5-9-5 9-5Z" />
+        <path d="m3 13 9 5 9-5" />
+        <path d="m3 17 9 5 9-5" />
+      </svg>
+    ),
+  },
+  {
+    id: "settings",
+    label: "Settings",
+    icon: (
+      <svg
+        className={ICON_CLASS}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={1.7}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="12" cy="12" r="3" />
+        <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.04 1.56V21a2 2 0 1 1-4 0v-.08A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.56-1.04H3a2 2 0 1 1 0-4h.08A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1.04-1.56V3a2 2 0 1 1 4 0v.08A1.7 1.7 0 0 0 15 4.6a1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9c.18.5.59.88 1.08 1h.52a2 2 0 1 1 0 4h-.08a1.7 1.7 0 0 0-1.52 1Z" />
+      </svg>
+    ),
+  },
+];
+
+export default function NavRail() {
+  const active = useMapStore((s) => s.leftPanel);
+  const toggle = useMapStore((s) => s.toggleLeftPanel);
+
+  return (
+    <nav className="z-40 flex h-full w-12 flex-col items-stretch border-r border-zinc-800 bg-zinc-950/95">
+      {ITEMS.map((item) => {
+        const on = active === item.id;
+        return (
+          <button
+            key={item.id}
+            onClick={() => toggle(item.id)}
+            title={item.label}
+            aria-label={item.label}
+            aria-pressed={on}
+            className={`group relative flex h-12 items-center justify-center transition-colors ${
+              on
+                ? "text-cyan-300"
+                : "text-zinc-500 hover:bg-zinc-900 hover:text-zinc-200"
+            }`}
+          >
+            <span
+              className={`absolute left-0 top-1/2 h-6 w-0.5 -translate-y-1/2 rounded-r ${
+                on ? "bg-cyan-400" : "bg-transparent"
+              }`}
+            />
+            {item.icon}
+          </button>
+        );
+      })}
+    </nav>
+  );
+}
