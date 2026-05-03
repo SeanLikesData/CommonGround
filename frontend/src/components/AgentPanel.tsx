@@ -17,6 +17,7 @@ export default function AgentPanel() {
   const openChat = useMapStore((s) => s.openChat);
   const closeChat = useMapStore((s) => s.closeChat);
   const openSitrep = useMapStore((s) => s.openSitrep);
+  const addMemory = useMapStore((s) => s.addMemory);
 
   const [input, setInput] = useState("");
   const [turns, setTurns] = useState<Turn[]>([]);
@@ -49,10 +50,22 @@ export default function AgentPanel() {
         body: JSON.stringify({ question }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = (await res.json()) as { answer: string };
+      const data = (await res.json()) as {
+        answer: string;
+        saved_memories?: string[];
+      };
       setTurns((prev) =>
         prev.map((t) => (t.id === id ? { ...t, answer: data.answer } : t)),
       );
+      for (const text of data.saved_memories ?? []) {
+        addMemory({
+          id: crypto.randomUUID(),
+          t: 0,
+          kind: "rule",
+          source: "analyst",
+          text,
+        });
+      }
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       setTurns((prev) =>

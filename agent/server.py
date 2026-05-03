@@ -1,4 +1,5 @@
 import asyncio
+import contextvars
 import json
 import logging
 import os
@@ -64,6 +65,12 @@ class AskRequest(BaseModel):
 
 class AskResponse(BaseModel):
     answer: str
+    saved_memories: list[str] = []
+
+
+_saved_memories: contextvars.ContextVar[Optional[list[str]]] = contextvars.ContextVar(
+    "saved_memories", default=None
+)
 
 
 def _truncate(text: str) -> str:
@@ -123,7 +130,11 @@ def build_qa_agent() -> Agent:
     @qa.tool_plain
     def remember(text: str) -> str:
         """Append a durable memory to recall in future cycles."""
-        return append_memory(text)
+        line = append_memory(text)
+        buf = _saved_memories.get()
+        if buf is not None:
+            buf.append(text.strip())
+        return line
 
     return qa
 
@@ -155,8 +166,13 @@ def health() -> dict:
 @app.post("/ask", response_model=AskResponse)
 async def ask(req: AskRequest) -> AskResponse:
     log.info("ask: %s", req.question)
-    result = await get_qa_agent().run(req.question)
-    return AskResponse(answer=result.output)
+    buf: list[str] = []
+    token = _saved_memories.set(buf)
+    try:
+        result = await get_qa_agent().run(req.question)
+    finally:
+        _saved_memories.reset(token)
+    return AskResponse(answer=result.output, saved_memories=buf)
 
 
 SITREP_SYSTEM_PROMPT = """You are an intelligence analyst writing a SITREP (situation report) for a battlespace operations cell.
