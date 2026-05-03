@@ -110,6 +110,18 @@ export default function GraphView() {
     load();
   }, [load]);
 
+  // Stronger repulsion + collision so dense subgraphs don't pile up.
+  useEffect(() => {
+    const fg = fgRef.current;
+    if (!fg || !data) return;
+    fg.d3Force("charge")?.strength(-220);
+    const linkForce = fg.d3Force("link") as
+      | { distance: (d: number) => unknown }
+      | undefined;
+    linkForce?.distance(60);
+    fg.d3ReheatSimulation();
+  }, [data]);
+
   useEffect(() => {
     if (!wrapRef.current) return;
     const ro = new ResizeObserver((entries) => {
@@ -176,10 +188,11 @@ export default function GraphView() {
               width={size.width}
               height={size.height}
               backgroundColor="#09090b"
-              cooldownTicks={120}
-              d3VelocityDecay={0.3}
-              nodeRelSize={6}
-              nodeVal={(n) => 2 + Math.sqrt((n as GraphNode).degree ?? 0) * 1.5}
+              cooldownTicks={200}
+              d3VelocityDecay={0.35}
+              warmupTicks={40}
+              nodeRelSize={4}
+              nodeVal={(n) => 1 + Math.sqrt((n as GraphNode).degree ?? 0)}
               nodeColor={(n) => colorFor((n as GraphNode).label)}
               nodeLabel={(n) => {
                 const node = n as GraphNode;
@@ -200,7 +213,7 @@ export default function GraphView() {
               onBackgroundClick={() => setSelected(null)}
               nodePointerAreaPaint={(n, color, ctx) => {
                 const node = n as GraphNode;
-                const r = 8 + Math.sqrt(node.degree ?? 0) * 1.5;
+                const r = 8 + Math.sqrt(node.degree ?? 0);
                 ctx.fillStyle = color;
                 ctx.beginPath();
                 ctx.arc(node.x ?? 0, node.y ?? 0, r, 0, 2 * Math.PI);
@@ -209,14 +222,17 @@ export default function GraphView() {
               nodeCanvasObjectMode={() => "after"}
               nodeCanvasObject={(n, ctx, scale) => {
                 const node = n as GraphNode;
-                if (scale < 0.8) return;
+                // Only draw labels at high zoom OR for the selected node,
+                // otherwise dense clusters become a wall of overlapping text.
+                const isSelected = node.id === selected?.id;
+                if (!isSelected && scale < 2.5) return;
                 const text = displayName(node);
-                const fontSize = Math.max(10 / scale, 4);
-                ctx.font = `${fontSize}px sans-serif`;
-                ctx.fillStyle = "#e2e8f0";
+                const fontSize = Math.max(10 / scale, 3);
+                ctx.font = `${isSelected ? "bold " : ""}${fontSize}px sans-serif`;
+                ctx.fillStyle = isSelected ? "#fde68a" : "#e2e8f0";
                 ctx.textAlign = "center";
                 ctx.textBaseline = "top";
-                const r = 6 + Math.sqrt(node.degree ?? 0) * 1.5;
+                const r = 4 + Math.sqrt(node.degree ?? 0);
                 ctx.fillText(text, node.x ?? 0, (node.y ?? 0) + r + 2);
               }}
             />
