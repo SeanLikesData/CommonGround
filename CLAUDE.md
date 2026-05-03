@@ -95,3 +95,8 @@ Eight Cypher-based patterns drive the agent's analysis: `new_activity`, `multi_i
 | MongoDB   | 27017 |
 | Neo4j HTTP | 7474 |
 | Neo4j Bolt | 7687 |
+
+## Git workflow
+   - Always work on the currently checked-out branch.
+   - Never create new branches unless I explicitly ask.
+   - Never run `git checkout -b`, `git switch -c`, or `git worktree add` without confirmation.
