@@ -1,30 +1,53 @@
+import asyncio
 import logging
-import time
+import os
 
-from graph import run_heuristics
-from insights import extract_insights
+import uvicorn
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+
+import graph
+from cycle import run_once
+from server import app
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger(__name__)
 
-INTERVAL = 15  # seconds between runs
+INTERVAL_SEC = int(os.environ.get("AGENT_INTERVAL_SEC", "15"))
+RECENT_WINDOW_SEC = int(os.environ.get("AGENT_RECENT_WINDOW_SEC", "900"))  # 15 min
+BASELINE_WINDOW_SEC = int(os.environ.get("AGENT_BASELINE_WINDOW_SEC", "86400"))  # 24 h
+HTTP_PORT = int(os.environ.get("AGENT_HTTP_PORT", "8001"))
 
 
-def run_once():
-    log.info("Running heuristics...")
-    data = run_heuristics()
-    log.info("Heuristic data: %s", data)
+async def _job() -> None:
+    try:
+        await run_once(RECENT_WINDOW_SEC, BASELINE_WINDOW_SEC)
+    except Exception:
+        log.exception("cycle failed")
 
-    insights = extract_insights(data)
-    if insights:
-        log.info("Insights:\n%s", insights)
+
+async def main() -> None:
+    scheduler = AsyncIOScheduler()
+    scheduler.add_job(_job, "interval", seconds=INTERVAL_SEC)
+    scheduler.start()
+    log.info(
+        "agent started (interval=%ds, recent=%ds, baseline=%ds, http=:%d)",
+        INTERVAL_SEC,
+        RECENT_WINDOW_SEC,
+        BASELINE_WINDOW_SEC,
+        HTTP_PORT,
+    )
+
+    asyncio.create_task(_job())
+
+    config = uvicorn.Config(app, host="0.0.0.0", port=HTTP_PORT, log_level="info")
+    server = uvicorn.Server(config)
+    try:
+        await server.serve()
+    finally:
+        log.info("shutting down")
+        scheduler.shutdown(wait=False)
+        graph.close()
 
 
 if __name__ == "__main__":
-    log.info("Agent starting. Polling every %ds.", INTERVAL)
-    while True:
-        try:
-            run_once()
-        except Exception as e:
-            log.error("Error during run: %s", e)
-        time.sleep(INTERVAL)
+    asyncio.run(main())
