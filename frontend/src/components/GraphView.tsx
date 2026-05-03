@@ -1,256 +1,266 @@
-import { useMemo } from "react";
-import { useMapStore } from "@/lib/store";
-import { reporterMeta } from "@/lib/reporters";
-import { severityColor } from "@/lib/symbology";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import ForceGraph2D, { type ForceGraphMethods } from "react-force-graph-2d";
 
-interface Node {
+const AGENT_URL = import.meta.env.VITE_AGENT_URL ?? "http://localhost:8001";
+
+interface GraphNode {
   id: string;
-  kind: "memory" | "alert" | "spot" | "sensor";
   label: string;
-  sub?: string;
-  color: string;
-  glyph?: string;
-  x: number;
-  y: number;
+  props: Record<string, unknown>;
+  // populated client-side
+  degree?: number;
+  // mutated by force-graph
+  x?: number;
+  y?: number;
 }
 
-interface Edge {
-  from: string;
-  to: string;
-  kind: "cites" | "contributes";
+interface GraphLink {
+  source: string | GraphNode;
+  target: string | GraphNode;
+  type: string;
 }
 
-const COL = {
-  memory: 140,
-  alert: 540,
-  spot: 940,
-  sensor: 1240,
+interface GraphPayload {
+  nodes: GraphNode[];
+  links: GraphLink[];
+}
+
+const LABEL_COLORS: Record<string, string> = {
+  Region: "#fb923c",
+  Location: "#facc15",
+  Modality: "#a78bfa",
+  Sensor: "#f8fafc",
+  Signal: "#22d3ee",
+  Report: "#34d399",
 };
 
-const ROW_HEIGHT = 70;
-const TOP_PADDING = 80;
+function colorFor(label: string): string {
+  return LABEL_COLORS[label] ?? "#94a3b8";
+}
+
+function shortId(id: string): string {
+  return id.length > 12 ? `${id.slice(0, 6)}…${id.slice(-4)}` : id;
+}
 
 export default function GraphView() {
-  const events = useMapStore((s) => s.events);
-  const alerts = useMapStore((s) => s.alerts);
-  const memory = useMapStore((s) => s.memory);
-  const setSelection = useMapStore((s) => s.setSelection);
+  const [data, setData] = useState<GraphPayload | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [selected, setSelected] = useState<GraphNode | null>(null);
+  const [size, setSize] = useState({ width: 800, height: 600 });
 
-  const { nodes, edges, height } = useMemo(() => {
-    const n: Node[] = [];
-    const e: Edge[] = [];
+  const wrapRef = useRef<HTMLDivElement | null>(null);
+  const fgRef = useRef<ForceGraphMethods<GraphNode, GraphLink> | undefined>(
+    undefined,
+  );
 
-    memory.forEach((m, i) => {
-      n.push({
-        id: `mem:${m.id}`,
-        kind: "memory",
-        label: m.kind.replace("_", " "),
-        sub: m.text.slice(0, 60) + (m.text.length > 60 ? "…" : ""),
-        color: "#c084fc",
-        x: COL.memory,
-        y: TOP_PADDING + i * ROW_HEIGHT,
-      });
-    });
-
-    alerts.forEach((a, i) => {
-      n.push({
-        id: `alert:${a.id}`,
-        kind: "alert",
-        label: a.id,
-        sub: a.summary.slice(0, 60) + (a.summary.length > 60 ? "…" : ""),
-        color: severityColor(a.severity),
-        x: COL.alert,
-        y: TOP_PADDING + i * ROW_HEIGHT * 1.5,
-      });
-      for (const sid of a.contributingSpotIds) {
-        e.push({ from: `alert:${a.id}`, to: `spot:${sid}`, kind: "contributes" });
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`${AGENT_URL}/graph?limit=400`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const payload = (await res.json()) as GraphPayload;
+      const degree = new Map<string, number>();
+      for (const l of payload.links) {
+        const s = typeof l.source === "string" ? l.source : l.source.id;
+        const t = typeof l.target === "string" ? l.target : l.target.id;
+        degree.set(s, (degree.get(s) ?? 0) + 1);
+        degree.set(t, (degree.get(t) ?? 0) + 1);
       }
-      for (const mid of a.citedMemoryIds) {
-        e.push({ from: `alert:${a.id}`, to: `mem:${mid}`, kind: "cites" });
-      }
-    });
-
-    const sensorIds = new Set<string>();
-    events.forEach((s, i) => {
-      const meta = reporterMeta(s.source);
-      n.push({
-        id: `spot:${s.id}`,
-        kind: "spot",
-        label: s.id,
-        sub: meta.label + (s.sensorId ? ` · ${s.sensorId}` : ""),
-        color: severityColor(s.severity),
-        glyph: meta.glyph,
-        x: COL.spot,
-        y: TOP_PADDING + i * ROW_HEIGHT,
-      });
-      if (s.sensorId) {
-        sensorIds.add(s.sensorId);
-        e.push({ from: `spot:${s.id}`, to: `sensor:${s.sensorId}`, kind: "contributes" });
-      }
-    });
-
-    [...sensorIds].forEach((sid, i) => {
-      n.push({
-        id: `sensor:${sid}`,
-        kind: "sensor",
-        label: sid,
-        color: "#f8fafc",
-        x: COL.sensor,
-        y: TOP_PADDING + i * ROW_HEIGHT,
-      });
-    });
-
-    const maxRow = Math.max(memory.length, alerts.length * 1.5, events.length, sensorIds.size);
-    const h = TOP_PADDING + maxRow * ROW_HEIGHT + 80;
-    return { nodes: n, edges: e, height: h };
-  }, [memory, alerts, events]);
-
-  const nodeById = useMemo(() => {
-    const m = new Map<string, Node>();
-    for (const n of nodes) m.set(n.id, n);
-    return m;
-  }, [nodes]);
-
-  const onNodeClick = (n: Node) => {
-    if (n.kind === "alert") {
-      setSelection({ kind: "alert", id: n.id.slice(6) });
-    } else if (n.kind === "spot") {
-      setSelection({ kind: "spot", id: n.id.slice(5) });
-    } else if (n.kind === "sensor") {
-      setSelection({ kind: "sensor", id: n.id.slice(7) });
+      payload.nodes.forEach((n) => (n.degree = degree.get(n.id) ?? 0));
+      setData(payload);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  useEffect(() => {
+    if (!wrapRef.current) return;
+    const ro = new ResizeObserver((entries) => {
+      const r = entries[0].contentRect;
+      setSize({ width: r.width, height: r.height });
+    });
+    ro.observe(wrapRef.current);
+    return () => ro.disconnect();
+  }, []);
+
+  const labelsPresent = useMemo(() => {
+    if (!data) return [];
+    const set = new Set<string>();
+    for (const n of data.nodes) set.add(n.label);
+    return [...set].sort();
+  }, [data]);
+
+  const nodeCount = data?.nodes.length ?? 0;
+  const linkCount = data?.links.length ?? 0;
 
   return (
-    <div className="flex h-full flex-col text-zinc-100">
-      <div className="sticky top-0 z-10 border-b border-zinc-800 bg-zinc-950/95 px-4 py-3 backdrop-blur">
-        <p className="text-xs text-zinc-400">
-          Schematic of the Neo4j store: memory ← alerts → SPOTs → sensors. Click a
-          node to open its detail panel.
-        </p>
-        <div className="mt-2 flex flex-wrap gap-3 text-[10px] uppercase tracking-wider text-zinc-500">
-          <LegendDot color="#c084fc" label="Memory" />
-          <LegendDot color="#fb923c" label="Alert" />
-          <LegendDot color="#22d3ee" label="SPOT" />
-          <LegendDot color="#f8fafc" label="Sensor" />
-          <span className="text-zinc-600">·</span>
-          <span>
-            <span className="text-zinc-300">— solid</span> contributes
-          </span>
-          <span>
-            <span className="text-zinc-300">┄ dashed</span> cites
-          </span>
+    <div className="flex h-full w-full text-zinc-100">
+      <div className="flex flex-1 flex-col">
+        <div className="border-b border-zinc-800 bg-zinc-950/95 px-4 py-3">
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-zinc-400">
+              Live view of the Neo4j knowledge graph. Click a node to inspect.
+            </p>
+            <div className="flex items-center gap-3 text-[11px] text-zinc-500">
+              <span>
+                {nodeCount} nodes · {linkCount} edges
+              </span>
+              <button
+                onClick={load}
+                disabled={loading}
+                className="rounded border border-zinc-700/70 bg-zinc-900 px-2 py-1 text-zinc-200 hover:bg-zinc-800 disabled:opacity-50"
+              >
+                {loading ? "Loading…" : "Refresh"}
+              </button>
+            </div>
+          </div>
+          <div className="mt-2 flex flex-wrap gap-3 text-[10px] uppercase tracking-wider text-zinc-500">
+            {labelsPresent.map((l) => (
+              <LegendDot key={l} color={colorFor(l)} label={l} />
+            ))}
+          </div>
+        </div>
+
+        <div ref={wrapRef} className="relative flex-1 overflow-hidden bg-zinc-950">
+          {error && (
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+              Failed to load graph: {error}
+            </div>
+          )}
+          {!error && data && data.nodes.length === 0 && (
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded border border-dashed border-zinc-800 px-6 py-12 text-center text-sm text-zinc-500">
+              Graph is empty.
+            </div>
+          )}
+          {data && data.nodes.length > 0 && (
+            <ForceGraph2D
+              ref={fgRef}
+              graphData={data}
+              width={size.width}
+              height={size.height}
+              backgroundColor="#09090b"
+              cooldownTicks={120}
+              d3VelocityDecay={0.3}
+              nodeRelSize={4}
+              nodeVal={(n) => 1 + Math.sqrt((n as GraphNode).degree ?? 0)}
+              nodeColor={(n) => colorFor((n as GraphNode).label)}
+              nodeLabel={(n) => {
+                const node = n as GraphNode;
+                return `${node.label}: ${shortId(node.id)}`;
+              }}
+              linkColor={() => "rgba(148,163,184,0.35)"}
+              linkDirectionalArrowLength={3}
+              linkDirectionalArrowRelPos={1}
+              linkLabel={(l) => (l as GraphLink).type}
+              onNodeClick={(n) => {
+                const node = n as GraphNode;
+                setSelected(node);
+                if (node.x !== undefined && node.y !== undefined) {
+                  fgRef.current?.centerAt(node.x, node.y, 600);
+                  fgRef.current?.zoom(3, 600);
+                }
+              }}
+              onBackgroundClick={() => setSelected(null)}
+              nodeCanvasObjectMode={() => "after"}
+              nodeCanvasObject={(n, ctx, scale) => {
+                const node = n as GraphNode;
+                if (scale < 1.2) return;
+                const text = shortId(node.id);
+                ctx.font = `${10 / scale}px sans-serif`;
+                ctx.fillStyle = "#e2e8f0";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "top";
+                const r = 4 + Math.sqrt(node.degree ?? 0);
+                ctx.fillText(text, node.x ?? 0, (node.y ?? 0) + r + 2);
+              }}
+            />
+          )}
         </div>
       </div>
 
-      <div className="px-4 pb-10 pt-4">
-        <svg
-          width={COL.sensor + 200}
-          height={height}
-          className="block"
-        >
-          {edges.map((e, i) => {
-            const a = nodeById.get(e.from);
-            const b = nodeById.get(e.to);
-            if (!a || !b) return null;
-            return (
-              <line
-                key={i}
-                x1={a.x}
-                y1={a.y}
-                x2={b.x}
-                y2={b.y}
-                stroke={e.kind === "cites" ? "#a78bfa" : "#22d3ee"}
-                strokeOpacity={0.45}
-                strokeWidth={1.25}
-                strokeDasharray={e.kind === "cites" ? "4 3" : undefined}
-              />
-            );
-          })}
-          {nodes.map((n) => (
-            <g
-              key={n.id}
-              transform={`translate(${n.x}, ${n.y})`}
-              className="cursor-pointer"
-              onClick={() => onNodeClick(n)}
-            >
-              <circle
-                r={n.kind === "alert" ? 11 : 8}
-                fill="#0f172a"
-                stroke={n.color}
-                strokeWidth={2}
-              />
-              {n.glyph && (
-                <text
-                  textAnchor="middle"
-                  dominantBaseline="central"
-                  fontSize={11}
-                  fill={n.color}
-                >
-                  {n.glyph}
-                </text>
-              )}
-              <text
-                x={n.kind === "memory" ? -14 : 14}
-                y={-2}
-                textAnchor={n.kind === "memory" ? "end" : "start"}
-                fontSize={11}
-                fontWeight={600}
-                fill="#e2e8f0"
-              >
-                {n.label}
-              </text>
-              {n.sub && (
-                <text
-                  x={n.kind === "memory" ? -14 : 14}
-                  y={11}
-                  textAnchor={n.kind === "memory" ? "end" : "start"}
-                  fontSize={10}
-                  fill="#94a3b8"
-                >
-                  {n.sub}
-                </text>
-              )}
-            </g>
-          ))}
-          <ColumnHeader x={COL.memory} label="Memory" />
-          <ColumnHeader x={COL.alert} label="Alerts" />
-          <ColumnHeader x={COL.spot} label="SPOTs" />
-          <ColumnHeader x={COL.sensor} label="Sensors" />
-        </svg>
-
-        {nodes.length === 0 && (
-          <div className="rounded border border-dashed border-zinc-800 px-6 py-12 text-center text-sm text-zinc-500">
-            Graph is empty.
-          </div>
-        )}
-      </div>
+      <DetailSidebar node={selected} onClose={() => setSelected(null)} />
     </div>
   );
 }
 
-function ColumnHeader({ x, label }: { x: number; label: string }) {
+function DetailSidebar({
+  node,
+  onClose,
+}: {
+  node: GraphNode | null;
+  onClose: () => void;
+}) {
+  if (!node) {
+    return (
+      <aside className="hidden w-72 flex-col border-l border-zinc-800 bg-zinc-900/60 p-4 text-xs text-zinc-500 md:flex">
+        Click a node to inspect its properties.
+      </aside>
+    );
+  }
+  const entries = Object.entries(node.props);
   return (
-    <text
-      x={x}
-      y={40}
-      textAnchor="middle"
-      fontSize={11}
-      fontWeight={700}
-      fill="#71717a"
-      style={{ textTransform: "uppercase", letterSpacing: "0.1em" }}
-    >
-      {label}
-    </text>
+    <aside className="flex w-72 flex-col border-l border-zinc-800 bg-zinc-900/95">
+      <header className="flex items-center justify-between border-b border-zinc-800 px-4 py-3">
+        <div className="flex items-center gap-2">
+          <span
+            className="inline-block h-2.5 w-2.5 rounded-full"
+            style={{ background: colorFor(node.label) }}
+          />
+          <span className="text-xs font-semibold uppercase tracking-wider text-zinc-200">
+            {node.label}
+          </span>
+        </div>
+        <button
+          onClick={onClose}
+          className="rounded px-2 py-0.5 text-sm text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
+        >
+          ×
+        </button>
+      </header>
+      <div className="flex-1 overflow-y-auto p-4">
+        <div className="mb-3 break-all text-[10px] uppercase tracking-wider text-zinc-500">
+          {node.id}
+        </div>
+        {entries.length === 0 && (
+          <div className="text-xs text-zinc-500">No properties.</div>
+        )}
+        <dl className="flex flex-col gap-2 text-xs">
+          {entries.map(([k, v]) => (
+            <div key={k} className="flex flex-col gap-0.5">
+              <dt className="text-[10px] uppercase tracking-wider text-zinc-500">
+                {k}
+              </dt>
+              <dd className="break-words text-zinc-200">{formatValue(v)}</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+    </aside>
   );
+}
+
+function formatValue(v: unknown): string {
+  if (v === null || v === undefined) return "—";
+  if (typeof v === "string" || typeof v === "number" || typeof v === "boolean") {
+    return String(v);
+  }
+  return JSON.stringify(v, null, 2);
 }
 
 function LegendDot({ color, label }: { color: string; label: string }) {
   return (
     <span className="flex items-center gap-1">
       <span
-        className="inline-block h-2 w-2 rounded-full border"
-        style={{ borderColor: color }}
+        className="inline-block h-2 w-2 rounded-full"
+        style={{ background: color }}
       />
       {label}
     </span>

@@ -5,7 +5,7 @@ import re
 from typing import Any, Optional
 
 import httpx
-from fastapi import FastAPI
+from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from pydantic_ai import Agent
@@ -155,3 +155,37 @@ async def ask(req: AskRequest) -> AskResponse:
     log.info("ask: %s", req.question)
     result = await get_qa_agent().run(req.question)
     return AskResponse(answer=result.output)
+
+
+GRAPH_QUERY = """
+MATCH (n)-[r]->(m)
+RETURN n, r, m, elementId(n) AS n_id, elementId(m) AS m_id,
+       labels(n) AS n_labels, labels(m) AS m_labels, type(r) AS r_type
+LIMIT $limit
+"""
+
+
+@app.get("/graph")
+def graph(limit: int = Query(300, ge=1, le=1000)) -> dict:
+    nodes: dict[str, dict] = {}
+    links: list[dict] = []
+    with driver().session() as session:
+        for row in session.run(GRAPH_QUERY, {"limit": limit}):
+            for side in ("n", "m"):
+                nid = row[f"{side}_id"]
+                if nid in nodes:
+                    continue
+                labels = row[f"{side}_labels"]
+                nodes[nid] = {
+                    "id": nid,
+                    "label": labels[0] if labels else "Node",
+                    "props": serialize(dict(row[side])),
+                }
+            links.append(
+                {
+                    "source": row["n_id"],
+                    "target": row["m_id"],
+                    "type": row["r_type"],
+                }
+            )
+    return {"nodes": list(nodes.values()), "links": links}
