@@ -30,8 +30,8 @@ export const ALL_SOURCES: SpotSource[] = [
 const DEFAULT_LEFT_PANEL_WIDTH = 320;
 export const MIN_LEFT_PANEL_WIDTH = 240;
 
-export type PlaySpeed = 1 | 10 | 100;
-export const PLAY_SPEEDS: PlaySpeed[] = [1, 10, 100];
+export type PlaySpeed = 1 | 10 | 100 | 1000;
+export const PLAY_SPEEDS: PlaySpeed[] = [1, 10, 100, 1000];
 
 interface MapState {
   events: SpotEvent[];

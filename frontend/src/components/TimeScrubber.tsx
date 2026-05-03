@@ -2,16 +2,29 @@ import { useCallback, useEffect, useMemo, useRef } from "react";
 import { PLAY_SPEEDS, useMapStore, type PlaySpeed } from "@/lib/store";
 import { severityColor } from "@/lib/symbology";
 
-// Right edge of the track is "now" — the latest event in the loaded data.
-// Cursor < right edge means we're looking at a past slice. Format a delta
-// from the right edge as T-Xm or T-Xh:MMm; right edge itself shows as T-0.
-function formatRelative(deltaSec: number): string {
-  if (deltaSec <= 0) return "T-0";
+// Mission-elapsed time since the start of the loaded window (left edge of
+// the track). Matches the T+m:ss format used in the spot/alert feeds so
+// readings line up across the UI.
+function formatMission(sec: number): string {
+  const s = Math.max(0, Math.floor(sec));
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const ss = s % 60;
+  if (h > 0) {
+    return `T+${h}:${m.toString().padStart(2, "0")}:${ss.toString().padStart(2, "0")}`;
+  }
+  return `T+${m}:${ss.toString().padStart(2, "0")}`;
+}
+
+// "Behind now" delta from the right edge of the track.
+function formatBehind(deltaSec: number): string {
+  if (deltaSec <= 0) return "live";
   const totalMin = Math.floor(deltaSec / 60);
-  if (totalMin < 60) return `T-${totalMin}m`;
+  if (totalMin < 1) return `${Math.floor(deltaSec)}s behind`;
+  if (totalMin < 60) return `${totalMin}m behind`;
   const h = Math.floor(totalMin / 60);
   const m = totalMin % 60;
-  return `T-${h}h${m.toString().padStart(2, "0")}m`;
+  return `${h}h${m.toString().padStart(2, "0")}m behind`;
 }
 
 interface Tick {
@@ -135,6 +148,7 @@ export default function TimeScrubber({ bounds }: Props) {
   const onJumpToNow = () => setCursorT(null);
 
   const deltaFromRight = bounds ? bounds.max - effectiveCursor : 0;
+  const elapsedFromStart = bounds ? effectiveCursor - bounds.min : 0;
   const empty = !bounds || bounds.max <= bounds.min;
 
   return (
@@ -229,10 +243,13 @@ export default function TimeScrubber({ bounds }: Props) {
         Jump to now
       </button>
 
-      <div className="flex w-20 flex-col items-end font-mono text-[11px] leading-tight">
-        <span className="text-zinc-100">{formatRelative(deltaFromRight)}</span>
+      <div className="flex w-28 flex-col items-end font-mono text-[11px] leading-tight">
+        <span className="text-zinc-100">
+          {formatMission(elapsedFromStart)}
+        </span>
         <span className="text-[10px] text-zinc-500">
-          / {formatRelative(span)}
+          {empty ? "—" : formatBehind(deltaFromRight)} ·{" "}
+          {formatMission(span).replace("T+", "")}
         </span>
       </div>
     </div>
