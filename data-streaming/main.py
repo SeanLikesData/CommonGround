@@ -5,25 +5,12 @@ import time
 from datetime import datetime, timezone
 
 from pymongo import MongoClient
-from simulate import rf_signal, drone_video, ugs_reading
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger(__name__)
 
 INTERVAL = 5  # seconds between polling cycles
 MONGO_URI = os.environ["MONGODB_URI"]
-
-
-# ── background noise (random signals when no scenario is active) ──────────────
-
-def emit_signals(col):
-    signals = [rf_signal(), drone_video(), ugs_reading()]
-    result = col.insert_many(signals)
-    log.info(
-        "Background: inserted %d signals: %s",
-        len(result.inserted_ids),
-        [s["modality"] for s in signals],
-    )
 
 
 # ── scenario control ──────────────────────────────────────────────────────────
@@ -142,8 +129,6 @@ if __name__ == "__main__":
                 control = get_control(col_control)
                 if control and control.get("status") == "active":
                     run_scenario_step(col_signals, col_control, control)
-                else:
-                    emit_signals(col_signals)
             except Exception as e:
                 log.error("Error in main loop: %s", e)
             time.sleep(INTERVAL)
