@@ -56,3 +56,30 @@ body {
     stroke-dashoffset: -16;
   }
 }
+
+@keyframes sensor-hot-pulse {
+  0% {
+    transform: scale(0.7);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+
+.sensor-hot-marker {
+  position: relative;
+  width: 22px;
+  height: 22px;
+  pointer-events: none;
+}
+
+.sensor-hot-marker::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  border: 2px solid var(--alert-color, #ef4444);
+  animation: sensor-hot-pulse 1.8s ease-out infinite;
+}

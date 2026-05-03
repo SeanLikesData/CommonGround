@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import maplibregl, { Map as MapLibreMap } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import {
@@ -12,25 +12,38 @@ import {
   terrainSource,
 } from "@/lib/mapStyle";
 import { useMapStore } from "@/lib/store";
-import { colors, severityColor } from "@/lib/symbology";
+import { colors, severityColor, type Severity } from "@/lib/symbology";
 import { setMapInstance } from "@/lib/mapInstance";
 import type { AlertEvent, SpotEvent } from "@/lib/types";
 
 const GEOJSON_URL = "/geojson/ao-lionheart.geojson";
 
-function spotsToFeatureCollection(spots: SpotEvent[]) {
+const SEVERITY_RANK: Record<Severity, number> = {
+  low: 0,
+  med: 1,
+  "med-high": 2,
+  high: 3,
+};
+
+function maxSeverity(a: Severity, b: Severity): Severity {
+  return SEVERITY_RANK[a] >= SEVERITY_RANK[b] ? a : b;
+}
+
+function spotsToFeatureCollection(spots: SpotEvent[], sensorLabels: Set<string>) {
   return {
     type: "FeatureCollection" as const,
-    features: spots.map((s) => ({
-      type: "Feature" as const,
-      properties: {
-        id: s.id,
-        severity: s.severity,
-        source: s.source,
-        salute: s.salute,
-      },
-      geometry: { type: "Point" as const, coordinates: s.location },
-    })),
+    features: spots
+      .filter((s) => !s.sensorId || !sensorLabels.has(s.sensorId))
+      .map((s) => ({
+        type: "Feature" as const,
+        properties: {
+          id: s.id,
+          severity: s.severity,
+          source: s.source,
+          salute: s.salute,
+        },
+        geometry: { type: "Point" as const, coordinates: s.location },
+      })),
   };
 }
 
@@ -62,6 +75,22 @@ export default function MapCanvas() {
   const visibleLayers = useMapStore((s) => s.visibleLayers);
   const chatOpen = useMapStore((s) => s.chatOpen);
   const markersRef = useRef<Map<string, maplibregl.Marker>>(new Map());
+  const sensorPulseRef = useRef<Map<string, maplibregl.Marker>>(new Map());
+  const [sensorIndex, setSensorIndex] = useState<{
+    labels: Set<string>;
+    coords: Map<string, [number, number]>;
+    isTrailCam: Set<string>;
+  }>({ labels: new Set(), coords: new Map(), isTrailCam: new Set() });
+
+  const hotSensors = useMemo(() => {
+    const m = new Map<string, Severity>();
+    for (const e of events) {
+      if (!e.sensorId || !sensorIndex.labels.has(e.sensorId)) continue;
+      const cur = m.get(e.sensorId);
+      m.set(e.sensorId, cur ? maxSeverity(cur, e.severity) : e.severity);
+    }
+    return m;
+  }, [events, sensorIndex]);
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
@@ -104,6 +133,20 @@ export default function MapCanvas() {
         const res = await fetch(GEOJSON_URL);
         const geojson = await res.json();
         map.addSource("ao", { type: "geojson", data: geojson });
+
+        const labels = new Set<string>();
+        const coords = new Map<string, [number, number]>();
+        const isTrailCam = new Set<string>();
+        for (const f of geojson.features as GeoJSON.Feature[]) {
+          const p = (f.properties ?? {}) as Record<string, unknown>;
+          if (p.feature_type !== "sensor") continue;
+          const label = p.label as string | undefined;
+          if (!label || f.geometry?.type !== "Point") continue;
+          labels.add(label);
+          coords.set(label, (f.geometry as GeoJSON.Point).coordinates as [number, number]);
+          if (p.sensor_type === "trail_cam") isTrailCam.add(label);
+        }
+        setSensorIndex({ labels, coords, isTrailCam });
 
         map.addLayer({
           id: "wadi-line",
@@ -316,35 +359,24 @@ export default function MapCanvas() {
           },
         });
 
-        // SPOT glyph: shape encodes the reporter type, color tracks severity.
+        // SPOT glyph: single shape — reporter type lives in the detail panel.
+        // Sensor-attached spots are filtered out and instead "upgrade" the
+        // sensor's own ring (severity stroke + pulse), so the SPOT layer only
+        // renders free-standing reports (e.g. human-typed observations).
         map.addLayer({
           id: "spots-layer",
           type: "symbol",
           source: "spots",
           layout: {
-            "text-field": [
-              "match",
-              ["get", "source"],
-              "drone",
-              "●",
-              "ugs",
-              "▲",
-              "rf",
-              "◆",
-              "human",
-              "★",
-              "trail-cam",
-              "■",
-              "●",
-            ],
-            "text-size": 20,
+            "text-field": "●",
+            "text-size": 14,
             "text-allow-overlap": true,
             "text-ignore-placement": true,
           },
           paint: {
-            "text-color": severityMatch,
+            "text-color": "#f8fafc",
             "text-halo-color": "#0f172a",
-            "text-halo-width": 2,
+            "text-halo-width": 1.5,
           },
         });
 
@@ -400,9 +432,12 @@ export default function MapCanvas() {
     });
 
     const markers = markersRef.current;
+    const sensorPulses = sensorPulseRef.current;
     return () => {
       for (const m of markers.values()) m.remove();
       markers.clear();
+      for (const m of sensorPulses.values()) m.remove();
+      sensorPulses.clear();
       setMapInstance(null);
       map.remove();
       mapRef.current = null;
@@ -410,15 +445,108 @@ export default function MapCanvas() {
     };
   }, [setSelection]);
 
-  // Push events into the spots source whenever they change.
+  // Push events into the spots source whenever they change. Sensor-attached
+  // spots are filtered out — the sensor itself lights up instead.
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !styleReady) return;
     const src = map.getSource("spots");
     if (src && "setData" in src) {
-      (src as maplibregl.GeoJSONSource).setData(spotsToFeatureCollection(events));
+      (src as maplibregl.GeoJSONSource).setData(
+        spotsToFeatureCollection(events, sensorIndex.labels),
+      );
     }
-  }, [events, styleReady]);
+  }, [events, sensorIndex, styleReady]);
+
+  // Upgrade hot sensors: severity-colored stroke, thicker ring, animated
+  // pulse overlay. Cool back to base when no spots reference the sensor.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !styleReady) return;
+
+    const sensorsVisible = visibleLayers.has("sensors");
+
+    const buildStrokeColor = (
+      base: string,
+      filterFn: (label: string) => boolean,
+    ): string | maplibregl.ExpressionSpecification => {
+      const entries = Array.from(hotSensors.entries()).filter(([l]) => filterFn(l));
+      if (entries.length === 0) return base;
+      const expr: unknown[] = ["case"];
+      for (const [label, sev] of entries) {
+        expr.push(["==", ["get", "label"], label], severityColor(sev));
+      }
+      expr.push(base);
+      return expr as maplibregl.ExpressionSpecification;
+    };
+
+    const buildStrokeWidth = (
+      base: number,
+      filterFn: (label: string) => boolean,
+    ): number | maplibregl.ExpressionSpecification => {
+      const labels = Array.from(hotSensors.keys()).filter(filterFn);
+      if (labels.length === 0) return base;
+      return [
+        "case",
+        ["in", ["get", "label"], ["literal", labels]],
+        base + 1.5,
+        base,
+      ] as maplibregl.ExpressionSpecification;
+    };
+
+    if (map.getLayer("sensors")) {
+      map.setPaintProperty(
+        "sensors",
+        "circle-stroke-color",
+        buildStrokeColor(layerColors.sensor, (l) => !sensorIndex.isTrailCam.has(l)),
+      );
+      map.setPaintProperty(
+        "sensors",
+        "circle-stroke-width",
+        buildStrokeWidth(2, (l) => !sensorIndex.isTrailCam.has(l)),
+      );
+    }
+    if (map.getLayer("trail-cams")) {
+      map.setPaintProperty(
+        "trail-cams",
+        "circle-stroke-color",
+        buildStrokeColor(layerColors.trailCam, (l) => sensorIndex.isTrailCam.has(l)),
+      );
+      map.setPaintProperty(
+        "trail-cams",
+        "circle-stroke-width",
+        buildStrokeWidth(2, (l) => sensorIndex.isTrailCam.has(l)),
+      );
+    }
+
+    const seen = new Set<string>();
+    if (sensorsVisible) {
+      for (const [label, sev] of hotSensors) {
+        const coord = sensorIndex.coords.get(label);
+        if (!coord) continue;
+        seen.add(label);
+        const existing = sensorPulseRef.current.get(label);
+        if (existing) {
+          const el = existing.getElement();
+          el.style.setProperty("--alert-color", severityColor(sev));
+          continue;
+        }
+        const el = document.createElement("div");
+        el.className = "sensor-hot-marker";
+        el.style.setProperty("--alert-color", severityColor(sev));
+        const marker = new maplibregl.Marker({ element: el, anchor: "center" })
+          .setLngLat(coord)
+          .addTo(map);
+        sensorPulseRef.current.set(label, marker);
+      }
+    }
+    for (const [label, m] of sensorPulseRef.current) {
+      if (!seen.has(label)) {
+        m.remove();
+        sensorPulseRef.current.delete(label);
+      }
+    }
+  }, [hotSensors, sensorIndex, visibleLayers, styleReady]);
 
   // Update connection lines whenever alerts or events change.
   useEffect(() => {
