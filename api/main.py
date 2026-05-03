@@ -27,18 +27,26 @@ client = MongoClient(MONGO_URI)
 db = client["commonground"]
 
 
-def serialize(doc: dict) -> dict:
-    out = dict(doc)
-    if "_id" in out and isinstance(out["_id"], ObjectId):
-        out["_id"] = str(out["_id"])
-    return out
+def serialize(value):
+    if isinstance(value, ObjectId):
+        return str(value)
+    if isinstance(value, dict):
+        return {k: serialize(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [serialize(v) for v in value]
+    return value
 
 
-def fetch(col: Collection, since: Optional[datetime], limit: int) -> list[dict]:
+def fetch(
+    col: Collection,
+    since: Optional[datetime],
+    limit: int,
+    time_field: str,
+) -> list[dict]:
     query: dict = {}
     if since is not None:
-        query["timestamp"] = {"$gte": since}
-    cursor = col.find(query).sort("timestamp", -1).limit(limit)
+        query[time_field] = {"$gte": since}
+    cursor = col.find(query).sort(time_field, -1).limit(limit)
     return [serialize(doc) for doc in cursor]
 
 
@@ -52,7 +60,7 @@ def get_signals(
     since: Optional[datetime] = None,
     limit: int = Query(100, ge=1, le=500),
 ) -> list[dict]:
-    return fetch(db["signals"], since, limit)
+    return fetch(db["signals"], since, limit, "timestamp")
 
 
 @app.get("/reports")
@@ -60,4 +68,6 @@ def get_reports(
     since: Optional[datetime] = None,
     limit: int = Query(100, ge=1, le=500),
 ) -> list[dict]:
-    return fetch(db["reports"], since, limit)
+    # Reports have no top-level timestamp; sort/filter by the embedded
+    # source-signal timestamp so newest reports come first.
+    return fetch(db["reports"], since, limit, "signal.timestamp")
