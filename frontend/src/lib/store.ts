@@ -12,7 +12,6 @@ import type {
 export type LeftPanelId =
   | "alerts"
   | "spots"
-  | "layers"
   | "filters"
   | "graph"
   | "memory"

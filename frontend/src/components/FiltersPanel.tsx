@@ -6,7 +6,17 @@ import {
 } from "@/lib/store";
 import { reporterMeta } from "@/lib/reporters";
 import { severityColor, type Severity } from "@/lib/symbology";
-import type { SpotSource } from "@/lib/types";
+import type { LayerId, SpotSource } from "@/lib/types";
+
+const LAYER_GROUPS: { id: LayerId; label: string }[] = [
+  { id: "sensors", label: "Sensors" },
+  { id: "spots", label: "SPOTs" },
+  { id: "alerts", label: "Alerts" },
+  { id: "nais", label: "NAIs" },
+  { id: "drone-orbit", label: "Drone orbits" },
+  { id: "tracks", label: "Tracks" },
+  { id: "inferred", label: "Inferred geometry" },
+];
 
 const SEVERITY_LABELS: Record<Severity, string> = {
   low: "Low",
@@ -34,6 +44,8 @@ export default function FiltersPanel() {
   const toggleSeverity = useMapStore((s) => s.toggleSeverityFilter);
   const toggleSource = useMapStore((s) => s.toggleSourceFilter);
   const resetFilters = useMapStore((s) => s.resetFilters);
+  const visibleLayers = useMapStore((s) => s.visibleLayers);
+  const toggleLayer = useMapStore((s) => s.toggleLayer);
 
   const bounds = useMemo(() => {
     const ts: number[] = [];
@@ -171,6 +183,35 @@ export default function FiltersPanel() {
                 {meta.glyph}
               </span>
               {meta.label}
+            </button>
+          );
+        })}
+      </section>
+
+      <section className="flex flex-col gap-1.5">
+        <h3 className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
+          Layers
+        </h3>
+        {LAYER_GROUPS.map((g) => {
+          const on = visibleLayers.has(g.id);
+          return (
+            <button
+              key={g.id}
+              onClick={() => toggleLayer(g.id)}
+              className={`flex items-center gap-2 rounded px-2 py-1.5 text-left transition-colors ${
+                on
+                  ? "bg-zinc-800/40 text-zinc-100"
+                  : "text-zinc-500 hover:bg-zinc-800/60 hover:text-zinc-300"
+              }`}
+            >
+              <span
+                className={`inline-block h-2.5 w-2.5 rounded-sm border ${
+                  on
+                    ? "border-cyan-300 bg-cyan-400/70"
+                    : "border-zinc-600 bg-transparent"
+                }`}
+              />
+              {g.label}
             </button>
           );
         })}

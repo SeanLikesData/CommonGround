@@ -47,27 +47,8 @@ const ITEMS: RailItem[] = [
     ),
   },
   {
-    id: "layers",
-    label: "Layers",
-    icon: (
-      <svg
-        className={ICON_CLASS}
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={1.7}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="m12 3 9 5-9 5-9-5 9-5Z" />
-        <path d="m3 13 9 5 9-5" />
-        <path d="m3 17 9 5 9-5" />
-      </svg>
-    ),
-  },
-  {
     id: "filters",
-    label: "Filters",
+    label: "Filters & layers",
     icon: (
       <svg
         className={ICON_CLASS}

@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef } from "react";
 import AlertFeed from "@/components/AlertFeed";
 import FiltersPanel from "@/components/FiltersPanel";
 import GraphView from "@/components/GraphView";
-import LayerToggle from "@/components/LayerToggle";
 import MemoryView from "@/components/MemoryView";
 import SettingsPanel from "@/components/SettingsPanel";
 import SpotFeed from "@/components/SpotFeed";
@@ -15,8 +14,7 @@ import {
 const TITLES: Record<LeftPanelId, string> = {
   alerts: "Alerts",
   spots: "Spot reports",
-  layers: "Layers",
-  filters: "Filters",
+  filters: "Filters & layers",
   graph: "Knowledge graph",
   memory: "Memory",
   settings: "Settings",
@@ -113,7 +111,6 @@ export default function LeftPanel() {
       <div className="flex-1 overflow-auto">
         {active === "alerts" && <AlertFeed />}
         {active === "spots" && <SpotFeed />}
-        {active === "layers" && <LayerToggle />}
         {active === "filters" && <FiltersPanel />}
         {active === "graph" && <GraphView />}
         {active === "memory" && <MemoryView />}
