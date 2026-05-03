@@ -1,42 +1,26 @@
 import { useEffect, useRef, useState } from "react";
 import { useMapStore } from "@/lib/store";
-import type { MemoryKind } from "@/lib/types";
 
-type Step =
-  | { kind: "idle" }
-  | { kind: "thinking" }
-  | { kind: "proposed"; userText: string; memoryKind: MemoryKind; proposalText: string };
+const AGENT_URL = import.meta.env.VITE_AGENT_URL ?? "http://localhost:8001";
 
-function classify(text: string): MemoryKind {
-  const t = text.toLowerCase();
-  if (t.includes("always") || t.includes("never") || t.includes("rule") || t.includes("must"))
-    return "rule";
-  if (t.includes("usually") || t.includes("typically") || t.includes("tends") || t.includes("often"))
-    return "prior";
-  return "reasoning_example";
-}
-
-function craftProposal(text: string, kind: MemoryKind): string {
-  switch (kind) {
-    case "rule":
-      return text.trim().endsWith(".") ? text.trim() : `${text.trim()}.`;
-    case "prior":
-      return `Prior: ${text.trim()}`;
-    case "reasoning_example":
-      return `Example: ${text.trim()}`;
-  }
-}
+type Turn = {
+  id: string;
+  question: string;
+  answer: string | null;
+  error: string | null;
+};
 
 export default function AgentPanel() {
   const open = useMapStore((s) => s.chatOpen);
   const prefill = useMapStore((s) => s.chatPrefill);
   const openChat = useMapStore((s) => s.openChat);
   const closeChat = useMapStore((s) => s.closeChat);
-  const addMemory = useMapStore((s) => s.addMemory);
 
   const [input, setInput] = useState("");
-  const [step, setStep] = useState<Step>({ kind: "idle" });
+  const [turns, setTurns] = useState<Turn[]>([]);
+  const [pending, setPending] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (open) {
@@ -45,32 +29,36 @@ export default function AgentPanel() {
     }
   }, [open, prefill]);
 
-  const submit = () => {
-    if (!input.trim()) return;
-    const userText = input.trim();
-    setStep({ kind: "thinking" });
-    setTimeout(() => {
-      const memoryKind = classify(userText);
-      setStep({
-        kind: "proposed",
-        userText,
-        memoryKind,
-        proposalText: craftProposal(userText, memoryKind),
-      });
-    }, 700);
-  };
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
+  }, [turns, pending]);
 
-  const confirm = () => {
-    if (step.kind !== "proposed") return;
-    addMemory({
-      id: `mem-${Date.now()}`,
-      t: Date.now() / 1000,
-      kind: step.memoryKind,
-      text: step.proposalText,
-      source: "analyst",
-    });
+  const submit = async () => {
+    if (!input.trim() || pending) return;
+    const question = input.trim();
+    const id = `t-${Date.now()}`;
+    setTurns((prev) => [...prev, { id, question, answer: null, error: null }]);
     setInput("");
-    setStep({ kind: "idle" });
+    setPending(true);
+    try {
+      const res = await fetch(`${AGENT_URL}/ask`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ question }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = (await res.json()) as { answer: string };
+      setTurns((prev) =>
+        prev.map((t) => (t.id === id ? { ...t, answer: data.answer } : t)),
+      );
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      setTurns((prev) =>
+        prev.map((t) => (t.id === id ? { ...t, error: msg } : t)),
+      );
+    } finally {
+      setPending(false);
+    }
   };
 
   if (!open) {
@@ -100,9 +88,6 @@ export default function AgentPanel() {
           <span className="text-xs font-semibold uppercase tracking-wider text-zinc-200">
             Agent
           </span>
-          <span className="rounded bg-amber-500/20 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wider text-amber-300">
-            stub
-          </span>
         </div>
         <button
           onClick={closeChat}
@@ -113,40 +98,37 @@ export default function AgentPanel() {
         </button>
       </header>
 
-      <div className="flex flex-1 flex-col gap-3 overflow-y-auto p-4">
-        <div className="rounded border border-zinc-800 bg-zinc-950/60 p-3 text-xs leading-relaxed text-zinc-400">
-          Ask a question about the AO, correct an inference, or capture a rule
-          for the agent to remember. Confirmed entries are written to memory.
-        </div>
-
-        {step.kind === "proposed" && (
-          <div className="rounded border border-fuchsia-500/40 bg-fuchsia-500/5 p-3">
-            <div className="mb-1 text-[10px] uppercase tracking-wider text-fuchsia-300">
-              Proposed memory · {step.memoryKind.replace("_", " ")}
-            </div>
-            <div className="text-sm text-zinc-100">{step.proposalText}</div>
-            <div className="mt-3 flex gap-2">
-              <button
-                onClick={confirm}
-                className="rounded bg-fuchsia-500/30 px-3 py-1 text-xs font-medium text-fuchsia-100 hover:bg-fuchsia-500/50"
-              >
-                Save to memory
-              </button>
-              <button
-                onClick={() => setStep({ kind: "idle" })}
-                className="rounded bg-zinc-700/40 px-3 py-1 text-xs text-zinc-300 hover:bg-zinc-700/70"
-              >
-                Discard
-              </button>
-            </div>
+      <div ref={scrollRef} className="flex flex-1 flex-col gap-3 overflow-y-auto p-4">
+        {turns.length === 0 && (
+          <div className="rounded border border-zinc-800 bg-zinc-950/60 p-3 text-xs leading-relaxed text-zinc-400">
+            Ask about the AO, current activity, or specific entities. The agent
+            queries the knowledge graph and live signal/report feeds, and may
+            persist durable guidance to its memory.
           </div>
         )}
 
-        {step.kind === "thinking" && (
-          <div className="rounded border border-zinc-700/70 bg-zinc-950/60 px-3 py-2 text-xs text-zinc-400">
-            <span className="animate-pulse">Agent is thinking…</span>
+        {turns.map((turn) => (
+          <div key={turn.id} className="flex flex-col gap-2">
+            <div className="self-end max-w-[90%] rounded bg-cyan-500/15 px-3 py-2 text-sm text-cyan-50">
+              {turn.question}
+            </div>
+            {turn.answer && (
+              <div className="rounded border border-zinc-800 bg-zinc-950/60 px-3 py-2 text-sm leading-relaxed text-zinc-100 whitespace-pre-wrap">
+                {turn.answer}
+              </div>
+            )}
+            {turn.error && (
+              <div className="rounded border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs text-red-200">
+                Error: {turn.error}
+              </div>
+            )}
+            {!turn.answer && !turn.error && (
+              <div className="rounded border border-zinc-700/70 bg-zinc-950/60 px-3 py-2 text-xs text-zinc-400">
+                <span className="animate-pulse">Agent is thinking…</span>
+              </div>
+            )}
           </div>
-        )}
+        ))}
       </div>
 
       <div className="border-t border-zinc-800 p-3">
@@ -160,14 +142,14 @@ export default function AgentPanel() {
               submit();
             }
           }}
-          placeholder="Ask the agent or add a rule, prior, or example…"
+          placeholder="Ask the agent about current activity, regions, sensors…"
           rows={3}
           className="w-full resize-none rounded border border-zinc-700/70 bg-zinc-950/60 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-cyan-400/60 focus:outline-none"
         />
         <div className="mt-2 flex justify-end">
           <button
             onClick={submit}
-            disabled={!input.trim() || step.kind === "thinking"}
+            disabled={!input.trim() || pending}
             className="rounded bg-cyan-500/30 px-4 py-1.5 text-sm font-medium text-cyan-100 hover:bg-cyan-500/50 disabled:cursor-not-allowed disabled:opacity-40"
           >
             Send

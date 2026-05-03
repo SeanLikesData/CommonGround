@@ -109,13 +109,13 @@ HEURISTICS: dict[str, str] = {
 }
 
 
-def _serialize(value: Any) -> Any:
+def serialize(value: Any) -> Any:
     if hasattr(value, "isoformat"):
         return value.isoformat()
     if isinstance(value, list):
-        return [_serialize(v) for v in value]
+        return [serialize(v) for v in value]
     if isinstance(value, dict):
-        return {k: _serialize(v) for k, v in value.items()}
+        return {k: serialize(v) for k, v in value.items()}
     return value
 
 
@@ -130,7 +130,7 @@ def run_heuristics(recent_window_sec: int, baseline_window_sec: int) -> dict[str
         for name, query in HEURISTICS.items():
             try:
                 records = session.run(query, params).data()
-                results[name] = [_serialize(r) for r in records]
+                results[name] = [serialize(r) for r in records]
             except Exception as e:
                 log.error("heuristic %s failed: %s", name, e)
                 results[name] = []
