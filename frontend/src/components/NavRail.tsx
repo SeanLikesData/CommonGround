@@ -108,6 +108,29 @@ const ITEMS: RailItem[] = [
     ),
   },
   {
+    id: "flow",
+    label: "Architecture flow",
+    icon: (
+      <svg
+        className={ICON_CLASS}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={1.7}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="6" cy="5" r="2" />
+        <circle cx="18" cy="5" r="2" />
+        <circle cx="12" cy="12" r="2" />
+        <circle cx="12" cy="19" r="2" />
+        <path d="M6 7v2a2 2 0 0 0 2 2h2" />
+        <path d="M18 7v2a2 2 0 0 1-2 2h-2" />
+        <path d="M12 14v3" />
+      </svg>
+    ),
+  },
+  {
     id: "settings",
     label: "Settings",
     icon: (

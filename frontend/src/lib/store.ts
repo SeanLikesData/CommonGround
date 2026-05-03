@@ -15,6 +15,7 @@ export type LeftPanelId =
   | "filters"
   | "graph"
   | "memory"
+  | "flow"
   | "settings";
 export type SpotDisplayMode = "merge" | "offset" | "cluster";
 
