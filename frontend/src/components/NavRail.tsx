@@ -120,13 +120,9 @@ const ITEMS: RailItem[] = [
         strokeLinecap="round"
         strokeLinejoin="round"
       >
-        <circle cx="6" cy="5" r="2" />
-        <circle cx="18" cy="5" r="2" />
-        <circle cx="12" cy="12" r="2" />
-        <circle cx="12" cy="19" r="2" />
-        <path d="M6 7v2a2 2 0 0 0 2 2h2" />
-        <path d="M18 7v2a2 2 0 0 1-2 2h-2" />
-        <path d="M12 14v3" />
+        <ellipse cx="12" cy="5" rx="7" ry="2.5" />
+        <path d="M5 5v6c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5V5" />
+        <path d="M5 11v6c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5v-6" />
       </svg>
     ),
   },
