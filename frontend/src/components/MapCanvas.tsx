@@ -238,9 +238,23 @@ export default function MapCanvas() {
 
     const attribEl = map
       .getContainer()
-      .querySelector(".maplibregl-ctrl-attrib");
-    attribEl?.classList.remove("maplibregl-compact-show");
-    attribEl?.removeAttribute("open");
+      .querySelector<HTMLElement>(".maplibregl-ctrl-attrib");
+    if (attribEl) {
+      let userToggled = false;
+      attribEl
+        .querySelector(".maplibregl-ctrl-attrib-button")
+        ?.addEventListener("click", () => {
+          userToggled = true;
+        });
+      const collapseAttribution = () => {
+        if (userToggled) return;
+        attribEl.classList.remove("maplibregl-compact-show");
+        attribEl.removeAttribute("open");
+      };
+      collapseAttribution();
+      map.on("styledata", collapseAttribution);
+      map.on("sourcedata", collapseAttribution);
+    }
 
     map.addControl(
       new maplibregl.NavigationControl({ showCompass: true }),
