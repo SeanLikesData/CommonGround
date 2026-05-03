@@ -1,0 +1,117 @@
+name: "wadi_hamrin_ambush"
+description: >
+  Reconstructs the prepopulated alert-db-001..003 storyline.
+  - Foot patrol creeps SW->NE up Wadi Hamrin past UGS-A then UGS-B toward NAI-7
+    (a covered overwatch over MSR PYTHON), tripping RF-1 with burst comms en route
+    and ending in drone-visual confirmation at the kill zone.
+  - A civilian-dress trigger vehicle approaches NAI-7 from VIL FORK along MSR PYTHON
+    just after the patrol settles, matching alert-db-002.
+  - In parallel, a separate foot element does three daily passes through IUGS-3
+    in the NAI-12 vicinity, reproducing the alert-db-003 patrol-loop pattern.
+duration_seconds: 1800
+seed: 17
+ao:
+  name: "AO HAMRIN"
+  center: [34.470, 44.422]
+  bbox_km: 8.0
+  # MSR PYTHON, running roughly E-W across the AO past NAI-7
+  road_waypoints:
+    - [34.461, 44.410]   # VIL FORK
+    - [34.461, 44.428]   # NAI-7 / kill zone
+    - [34.461, 44.445]   # eastern AO edge
+sensors:
+  # Wadi Hamrin pickets (SW -> NE up the wadi)
+  - id: "UGS-A"
+    modality: "ugs"
+    detection_type: "seismic"
+    location: [34.4555, 44.4205]
+    detection_radius_m: 250
+    false_positive_rate_per_min: 0.05
+  - id: "UGS-B"
+    modality: "ugs"
+    detection_type: "seismic"
+    location: [34.4585, 44.4245]
+    detection_radius_m: 250
+    false_positive_rate_per_min: 0.05
+  # RF overwatch covering NAI-7
+  - id: "RF-1"
+    modality: "rf"
+    location: [34.4625, 44.4285]
+    detection_radius_m: 3000
+    false_positive_rate_per_min: 0.1
+  # Drone video orbiting NAI-7 / MSR PYTHON
+  - id: "DRONE-1"
+    modality: "drone_video"
+    location: [34.461, 44.428]
+    detection_radius_m: 600
+    false_positive_rate_per_min: 0.02
+  # NAI-12 picket for the patrol-loop storyline
+  - id: "IUGS-3"
+    modality: "ugs"
+    detection_type: "seismic"
+    location: [34.48075, 44.41456]
+    detection_radius_m: 200
+    false_positive_rate_per_min: 0.05
+entities:
+  # --- Ambush thread: foot patrol creeping SW->NE up Wadi Hamrin to NAI-7 ---
+  - id: "AMBUSH-ELEMENT"
+    type: "foot_patrol"
+    pattern: "one_shot"
+    waypoints:
+      - [34.4540, 44.4185,    0]   # wadi mouth, SW
+      - [34.4555, 44.4205,  180]   # past UGS-A
+      - [34.4585, 44.4245,  420]   # past UGS-B
+      - [34.4610, 44.4280,  660]   # settled at NAI-7 overwatch
+      - [34.4610, 44.4280, 1800]   # holds position
+    rf_signature:
+      bands_mhz: [148.5, 162.3]
+      burst_interval_s: 90
+      tx_power_dbm: 28
+    seismic_signature: 3.5
+    acoustic_signature: 2.8
+    visual_signature: 4.5
+
+  # --- Trigger vehicle: civilian-dress vehicle approaching NAI-7 from VIL FORK ---
+  - id: "TRIGGER-VEH"
+    type: "civilian_vehicle"
+    pattern: "one_shot"
+    waypoints:
+      - [34.461, 44.410,  720]   # VIL FORK, just after ambush settles
+      - [34.461, 44.420,  840]
+      - [34.461, 44.428,  960]   # entering kill zone at NAI-7
+    seismic_signature: 5.5
+    acoustic_signature: 4.5
+    visual_signature: 7.0
+
+  # --- Patrol-loop thread: three daily passes through IUGS-3 near NAI-12 ---
+  # Compressed to one pass every 600s so the pattern emerges within the run.
+  - id: "PATROL-LOOP"
+    type: "foot_patrol"
+    pattern: "patrol"
+    period_seconds: 600
+    waypoints:
+      - [34.479,   44.4130,    0]
+      - [34.48075, 44.41456,   60]   # through IUGS-3
+      - [34.482,   44.4160,   120]
+      - [34.479,   44.4130,   600]
+    seismic_signature: 3.0
+    acoustic_signature: 2.5
+    visual_signature: 3.5
+
+  # --- Background civilian traffic on MSR PYTHON, to make the trigger non-trivial ---
+  - id: "CIV-1"
+    type: "civilian_vehicle"
+    pattern: "random_walk"
+    waypoints:
+      - [34.461, 44.415, 0]
+    seismic_signature: 1.5
+    acoustic_signature: 1.0
+    visual_signature: 2.0
+  - id: "CIV-2"
+    type: "civilian_vehicle"
+    pattern: "random_walk"
+    waypoints:
+      - [34.461, 44.440, 0]
+    seismic_signature: 1.8
+    acoustic_signature: 1.2
+    visual_signature: 2.5
