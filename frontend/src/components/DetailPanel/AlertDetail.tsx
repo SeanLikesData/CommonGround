@@ -41,7 +41,9 @@ export default function AlertDetail({ alert }: { alert: AlertEvent }) {
           <div className="mb-1 text-[10px] uppercase tracking-wider text-zinc-500">
             Agent reasoning
           </div>
-          <p className="text-xs leading-relaxed text-zinc-200">{alert.reasoning}</p>
+          <p className="whitespace-pre-line text-xs leading-relaxed text-zinc-200">
+            {alert.reasoning}
+          </p>
         </div>
       )}
 

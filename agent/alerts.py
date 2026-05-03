@@ -134,7 +134,14 @@ def persist_alerts(alerts: list[dict[str, Any]], reasoning: Optional[str]) -> in
     written = 0
     for a in alerts:
         sev = _severity(a["report_count"], a["mods"])
-        summary = _summary(a["geohash"], a["mods"], a["report_count"], a["sources"])
+        summary = _summary(
+            a["geohash"],
+            a["mods"],
+            a["report_count"],
+            a["sources"],
+            a.get("lat"),
+            a.get("lon"),
+        )
         doc = {
             "geohash": a["geohash"],
             "lat": a["lat"],
