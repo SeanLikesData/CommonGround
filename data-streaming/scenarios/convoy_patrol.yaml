@@ -1,0 +1,26 @@
+name: "convoy_patrol_demo"
+duration_seconds: 600
+ao:
+  center: [34.05, -118.25]
+  road_waypoints:
+    - [34.04, -118.26]
+    - [34.06, -118.24]
+sensors:
+  - {id: "UGS-001", modality: "ugs", location: [34.045, -118.255], radius_m: 200}
+  - {id: "UGS-002", modality: "ugs", location: [34.050, -118.250], radius_m: 200}
+  - {id: "UGS-003", modality: "ugs", location: [34.055, -118.245], radius_m: 200}
+  - {id: "RF-01",   modality: "rf",  location: [34.050, -118.250], radius_m: 1500}
+entities:
+  - id: "CONVOY-1"
+    type: "convoy"
+    pattern: "patrol"  # repeats waypoints
+    period_seconds: 180
+    waypoints:
+      - [34.04, -118.26, 0]
+      - [34.06, -118.24, 120]
+    rf_signature: {bands_mhz: [45.5, 67.2], burst_interval_s: 30}
+    seismic_signature: 7.5
+  - id: "CIVILIAN-1"
+    type: "civilian_vehicle"
+    pattern: "random_walk"
+    seismic_signature: 2.0
