@@ -9,29 +9,25 @@ log = logging.getLogger(__name__)
 
 ANTHROPIC_MODEL = "claude-haiku-4-5-20251001"
 
-SPOT_SCHEMA = {
-    "type": "json_schema",
-    "json_schema": {
-        "name": "spot_report",
-        "strict": True,
-        "schema": {
-            "type": "object",
-            "properties": {
-                "size":                 {"type": "string"},
-                "activity":             {"type": "string"},
-                "location_description": {"type": "string"},
-                "unit":                 {"type": "string"},
-                "time_dtg":             {"type": "string"},
-                "equipment":            {"type": "string"},
-                "threat_level":         {"type": "string", "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"]},
-                "narrative":            {"type": "string"},
-            },
-            "required": [
-                "size", "activity", "location_description", "unit",
-                "time_dtg", "equipment", "threat_level", "narrative",
-            ],
-            "additionalProperties": False,
+SPOT_TOOL = {
+    "name": "submit_spot_report",
+    "description": "Submit a structured NATO SPOT report extracted from the sensor signal.",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "size":                 {"type": "string", "description": "Number and type of contacts observed"},
+            "activity":             {"type": "string", "description": "What was observed happening"},
+            "location_description": {"type": "string", "description": "Human-readable location summary"},
+            "unit":                 {"type": "string", "description": "Identified unit or force; 'UNKNOWN' if not determinable"},
+            "time_dtg":             {"type": "string", "description": "Date-time group in format DDHHMMZMonYYYY"},
+            "equipment":            {"type": "string", "description": "Platforms and assets identified"},
+            "threat_level":         {"type": "string", "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"], "description": "Assessed threat level"},
+            "narrative":            {"type": "string", "description": "Full tactical assessment paragraph"},
         },
+        "required": [
+            "size", "activity", "location_description", "unit",
+            "time_dtg", "equipment", "threat_level", "narrative",
+        ],
     },
 }
 
@@ -77,18 +73,9 @@ def generate_spot_report(signal: dict) -> dict | None:
             max_tokens=1024,
             system=(
                 "You are a NATO tactical intelligence analyst generating SPOT reports "
-                "from multi-modal sensor signals. Extract all relevant tactical information "
-                "from the provided signal JSON and produce a structured SPOT report.\n\n"
-                "SPOT report schema (all fields required):\n"
-                "- size: number and type of contacts observed\n"
-                "- activity: what was observed happening\n"
-                "- location_description: human-readable location summary\n"
-                "- unit: identified unit or force if known, otherwise 'UNKNOWN'\n"
-                "- time_dtg: date-time group in format DDHHMMZMonYYYY\n"
-                "- equipment: platforms and assets identified\n"
-                "- threat_level: exactly one of LOW / MEDIUM / HIGH / CRITICAL\n"
-                "- narrative: full tactical assessment paragraph\n\n"
-                "Use only information present in the signal. Do not hallucinate."
+                "from multi-modal sensor signals. Use the submit_spot_report tool to "
+                "submit a structured SPOT report based solely on information in the signal. "
+                "Do not hallucinate unit names, coordinates, or capabilities."
             ),
             messages=[
                 {
@@ -96,9 +83,11 @@ def generate_spot_report(signal: dict) -> dict | None:
                     "content": f"Generate a SPOT report from this sensor signal:\n\n{signal_json}",
                 }
             ],
-            response_format=SPOT_SCHEMA,
+            tools=[SPOT_TOOL],
+            tool_choice={"type": "tool", "name": "submit_spot_report"},
         )
-        spot = json.loads(response.content[0].text)
+        tool_block = next(b for b in response.content if b.type == "tool_use")
+        spot = tool_block.input
         log.info(
             "SPOT generated for modality=%s threat_level=%s",
             signal.get("modality"),
@@ -112,8 +101,8 @@ def generate_spot_report(signal: dict) -> dict | None:
         log.error("Claude API rate limit: %s", e)
     except anthropic.APIStatusError as e:
         log.error("Claude API status error %s: %s", e.status_code, e.message)
-    except (json.JSONDecodeError, KeyError, IndexError) as e:
-        log.error("Failed to parse Claude response: %s", e)
+    except (KeyError, StopIteration) as e:
+        log.error("Unexpected Claude response structure: %s", e)
 
     return None
 
