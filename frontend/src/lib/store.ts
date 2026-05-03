@@ -9,6 +9,7 @@ import type {
 
 export type LeftPanelId =
   | "alerts"
+  | "spots"
   | "layers"
   | "graph"
   | "memory"

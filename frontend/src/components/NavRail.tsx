@@ -29,6 +29,24 @@ const ITEMS: RailItem[] = [
     ),
   },
   {
+    id: "spots",
+    label: "Spot reports",
+    icon: (
+      <svg
+        className={ICON_CLASS}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={1.7}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M12 21s-7-6.5-7-12a7 7 0 1 1 14 0c0 5.5-7 12-7 12Z" />
+        <circle cx="12" cy="9" r="2.5" />
+      </svg>
+    ),
+  },
+  {
     id: "layers",
     label: "Layers",
     icon: (

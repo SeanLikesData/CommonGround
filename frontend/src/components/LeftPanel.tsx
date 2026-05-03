@@ -4,6 +4,7 @@ import GraphView from "@/components/GraphView";
 import LayerToggle from "@/components/LayerToggle";
 import MemoryView from "@/components/MemoryView";
 import SettingsPanel from "@/components/SettingsPanel";
+import SpotFeed from "@/components/SpotFeed";
 import {
   MIN_LEFT_PANEL_WIDTH,
   useMapStore,
@@ -12,6 +13,7 @@ import {
 
 const TITLES: Record<LeftPanelId, string> = {
   alerts: "Alerts",
+  spots: "Spot reports",
   layers: "Layers",
   graph: "Knowledge graph",
   memory: "Memory",
@@ -24,6 +26,7 @@ export default function LeftPanel() {
   const width = useMapStore((s) => s.leftPanelWidth);
   const setWidth = useMapStore((s) => s.setLeftPanelWidth);
   const alertCount = useMapStore((s) => s.alerts.length);
+  const spotCount = useMapStore((s) => s.events.length);
   const memoryCount = useMapStore((s) => s.memory.length);
 
   const draggingRef = useRef(false);
@@ -63,7 +66,13 @@ export default function LeftPanel() {
   };
 
   const badge =
-    active === "alerts" ? alertCount : active === "memory" ? memoryCount : null;
+    active === "alerts"
+      ? alertCount
+      : active === "spots"
+        ? spotCount
+        : active === "memory"
+          ? memoryCount
+          : null;
 
   return (
     <aside
@@ -92,6 +101,7 @@ export default function LeftPanel() {
       </header>
       <div className="flex-1 overflow-auto">
         {active === "alerts" && <AlertFeed />}
+        {active === "spots" && <SpotFeed />}
         {active === "layers" && <LayerToggle />}
         {active === "graph" && <GraphView />}
         {active === "memory" && <MemoryView />}
