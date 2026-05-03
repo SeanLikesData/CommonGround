@@ -58,6 +58,7 @@ interface MapState {
 
   addSpot: (e: SpotEvent) => void;
   addAlert: (a: AlertEvent) => void;
+  upsertAlert: (a: AlertEvent) => void;
   addMemory: (m: MemoryEntry) => void;
   setSelection: (s: Selection) => void;
   toggleLayer: (id: LayerId) => void;
@@ -107,6 +108,14 @@ export const useMapStore = create<MapState>((set) => ({
 
   addSpot: (e) => set((st) => ({ events: [...st.events, e] })),
   addAlert: (a) => set((st) => ({ alerts: [...st.alerts, a] })),
+  upsertAlert: (a) =>
+    set((st) => {
+      const idx = st.alerts.findIndex((x) => x.id === a.id);
+      if (idx === -1) return { alerts: [...st.alerts, a] };
+      const next = st.alerts.slice();
+      next[idx] = a;
+      return { alerts: next };
+    }),
   addMemory: (m) => set((st) => ({ memory: [...st.memory, m] })),
   setSelection: (s) => set({ selection: s }),
   toggleLayer: (id) =>

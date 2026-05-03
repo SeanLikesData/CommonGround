@@ -5,6 +5,7 @@ import os
 import uvicorn
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
+import alerts
 import graph
 from cycle import run_once
 from server import app
@@ -47,6 +48,7 @@ async def main() -> None:
         log.info("shutting down")
         scheduler.shutdown(wait=False)
         graph.close()
+        alerts.close()
 
 
 if __name__ == "__main__":

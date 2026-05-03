@@ -3,9 +3,7 @@ import type { AlertEvent, MemoryEntry, SpotEvent, SpotSource } from "./types";
 
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
 
-// Alerts and memories are not yet served by the API; keep them on static
-// JSON until the corresponding Mongo collections + endpoints exist.
-const ALERTS_URL = "/data/alerts.json";
+// Memories are not yet served by the API; keep them on static JSON.
 const MEMORIES_URL = "/data/memories.json";
 
 async function fetchJson<T>(url: string): Promise<T> {
@@ -136,8 +134,57 @@ export function getLatestReportCreatedAt(): Date | null {
   return latestCreatedAtMs > 0 ? new Date(latestCreatedAtMs) : null;
 }
 
-export function fetchAlerts(): Promise<AlertEvent[]> {
-  return fetchJson<AlertEvent[]>(ALERTS_URL);
+interface ApiAlert {
+  _id: string;
+  geohash: string;
+  lat?: number;
+  lon?: number;
+  severity?: string;
+  summary?: string;
+  modalities?: string[];
+  report_count?: number;
+  contributing_report_ids?: string[];
+  reasoning?: string | null;
+  updated_at?: string;
+  latest_report_at?: string | null;
+}
+
+const ALERT_SEVERITY: Record<string, Severity> = {
+  low: "low",
+  med: "med",
+  "med-high": "med-high",
+  high: "high",
+};
+
+function mapAlert(a: ApiAlert): AlertEvent | null {
+  if (typeof a.lat !== "number" || typeof a.lon !== "number") return null;
+  const tsRaw = a.latest_report_at ?? a.updated_at;
+  if (!tsRaw) return null;
+  const ts = Date.parse(tsRaw);
+  if (Number.isNaN(ts)) return null;
+  if (epochMs === null || ts < epochMs) epochMs = ts;
+  return {
+    id: a._id,
+    t: (ts - epochMs) / 1000,
+    location: [a.lon, a.lat],
+    severity: ALERT_SEVERITY[a.severity ?? "low"] ?? "low",
+    summary: a.summary ?? `${a.geohash}: alert`,
+    contributingSpotIds: a.contributing_report_ids ?? [],
+    citedMemoryIds: [],
+    reasoning: a.reasoning ?? undefined,
+  };
+}
+
+export async function fetchAlerts(): Promise<AlertEvent[]> {
+  const url = new URL("/alerts", API_URL);
+  url.searchParams.set("limit", "200");
+  const raw = await fetchJson<ApiAlert[]>(url.toString());
+  const out: AlertEvent[] = [];
+  for (const a of raw) {
+    const m = mapAlert(a);
+    if (m) out.push(m);
+  }
+  return out;
 }
 
 export function fetchMemories(): Promise<MemoryEntry[]> {

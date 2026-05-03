@@ -33,11 +33,13 @@ services:
       - AGENT_BASELINE_WINDOW_SEC=${AGENT_BASELINE_WINDOW_SEC:-86400}
       - API_URL=http://api:8000
       - AGENT_ALLOWED_ORIGINS=${AGENT_ALLOWED_ORIGINS:-http://localhost:3000}
+      - MONGODB_URI=mongodb://mongo:27017/commonground
     volumes:
       - ./agent/memories.md:/app/memories.md
     depends_on:
       - neo4j
       - api
+      - mongo
     restart: unless-stopped
 
   data-streaming:

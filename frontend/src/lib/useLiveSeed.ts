@@ -8,8 +8,8 @@ import { useMapStore } from "./store";
 
 const POLL_INTERVAL_MS = 3000;
 
-// One-shot seed of alerts/memories from static JSON, plus polling of the
-// /reports API for new spot events.
+// Polls /reports for spots and /alerts for fused alerts. Memories are still
+// seeded once from a static JSON file.
 export function useLiveSeed() {
   useEffect(() => {
     let cancelled = false;
@@ -28,30 +28,44 @@ export function useLiveSeed() {
           }
         }
         console.log(
-          `[useLiveSeed] poll fetched=${spots.length} new=${added} total=${state.events.length + added}`,
+          `[useLiveSeed] poll spots fetched=${spots.length} new=${added} total=${state.events.length + added}`,
         );
       } catch (err) {
-        console.error("[useLiveSeed] poll error", err);
+        console.error("[useLiveSeed] spot poll error", err);
       }
     };
 
-    Promise.all([fetchAlerts(), fetchMemories()])
-      .then(([alerts, memories]) => {
+    const ingestAlerts = async () => {
+      try {
+        const alerts = await fetchAlerts();
         if (cancelled) return;
         const state = useMapStore.getState();
-        const seenAlerts = new Set(state.alerts.map((a) => a.id));
-        const seenMems = new Set(state.memory.map((m) => m.id));
-        for (const a of alerts) {
-          if (!seenAlerts.has(a.id)) state.addAlert(a);
-        }
+        for (const a of alerts) state.upsertAlert(a);
+        console.log(
+          `[useLiveSeed] poll alerts fetched=${alerts.length} total=${useMapStore.getState().alerts.length}`,
+        );
+      } catch (err) {
+        console.error("[useLiveSeed] alert poll error", err);
+      }
+    };
+
+    fetchMemories()
+      .then((memories) => {
+        if (cancelled) return;
+        const state = useMapStore.getState();
+        const seen = new Set(state.memory.map((m) => m.id));
         for (const m of memories) {
-          if (!seenMems.has(m.id)) state.addMemory(m);
+          if (!seen.has(m.id)) state.addMemory(m);
         }
       })
-      .catch((err) => console.error("alerts/memories seed error", err));
+      .catch((err) => console.error("memories seed error", err));
 
     ingestSpots();
-    const interval = window.setInterval(ingestSpots, POLL_INTERVAL_MS);
+    ingestAlerts();
+    const interval = window.setInterval(() => {
+      ingestSpots();
+      ingestAlerts();
+    }, POLL_INTERVAL_MS);
 
     return () => {
       cancelled = true;

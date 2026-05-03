@@ -73,3 +73,11 @@ def get_reports(
     # order, so a `since` filter on signal.timestamp silently drops newly
     # written reports whose source signal predates the polling cursor.
     return fetch(db["reports"], since, limit, "created_at")
+
+
+@app.get("/alerts")
+def get_alerts(
+    since: Optional[datetime] = None,
+    limit: int = Query(100, ge=1, le=500),
+) -> list[dict]:
+    return fetch(db["alerts"], since, limit, "updated_at")
