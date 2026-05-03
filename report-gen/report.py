@@ -1,11 +1,47 @@
+import json
+import logging
+import os
 from datetime import datetime, timezone
 
+import anthropic
+
+log = logging.getLogger(__name__)
+
+ANTHROPIC_MODEL = "claude-haiku-4-5-20251001"
+
+SPOT_TOOL = {
+    "name": "submit_spot_report",
+    "description": "Submit a structured NATO SPOT report extracted from the sensor signal.",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "size":                 {"type": "string", "description": "Number and type of contacts observed"},
+            "activity":             {"type": "string", "description": "What was observed happening"},
+            "location_description": {"type": "string", "description": "Human-readable location summary"},
+            "unit":                 {"type": "string", "description": "Identified unit or force; 'UNKNOWN' if not determinable"},
+            "time_dtg":             {"type": "string", "description": "Date-time group in format DDHHMMZMonYYYY"},
+            "equipment":            {"type": "string", "description": "Platforms and assets identified"},
+            "threat_level":         {"type": "string", "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"], "description": "Assessed threat level"},
+            "narrative":            {"type": "string", "description": "Full tactical assessment paragraph"},
+        },
+        "required": [
+            "size", "activity", "location_description", "unit",
+            "time_dtg", "equipment", "threat_level", "narrative",
+        ],
+    },
+}
 
 # Minimum threshold per modality to trigger a report
 THRESHOLDS = {
-    "rf": lambda s: s.get("signal_strength_dbm", -999) > -60,
+    # existing modalities
+    "rf":          lambda s: s.get("signal_strength_dbm", -999) > -60,
     "drone_video": lambda s: s.get("detection_confidence", 0) > 0.75,
-    "ugs": lambda s: s.get("confidence", 0) > 0.75,
+    "ugs":         lambda s: s.get("confidence", 0) > 0.75,
+    # INDOPACOM modalities
+    "ais":            lambda s: s.get("dark", False) is True,
+    "maritime_radar": lambda s: s.get("confidence", 0) > 0.75,
+    "sonar":          lambda s: s.get("confidence", 0) > 0.75,
+    "elint":          lambda s: s.get("confidence", 0) > 0.75,
 }
 
 
@@ -15,12 +51,71 @@ def above_threshold(signal: dict) -> bool:
     return check(signal) if check else False
 
 
+def generate_spot_report(signal: dict) -> dict | None:
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if not api_key:
+        log.warning("ANTHROPIC_API_KEY not set — skipping SPOT generation")
+        return None
+
+    signal_payload = {k: v for k, v in signal.items() if k not in ("_id", "processed")}
+
+    def _serialize(obj):
+        if isinstance(obj, datetime):
+            return obj.isoformat()
+        raise TypeError(f"Object of type {type(obj)} is not JSON serializable")
+
+    signal_json = json.dumps(signal_payload, default=_serialize, indent=2)
+
+    try:
+        client = anthropic.Anthropic(api_key=api_key)
+        response = client.messages.create(
+            model=ANTHROPIC_MODEL,
+            max_tokens=1024,
+            system=(
+                "You are a NATO tactical intelligence analyst generating SPOT reports "
+                "from multi-modal sensor signals. Use the submit_spot_report tool to "
+                "submit a structured SPOT report based solely on information in the signal. "
+                "Do not hallucinate unit names, coordinates, or capabilities."
+            ),
+            messages=[
+                {
+                    "role": "user",
+                    "content": f"Generate a SPOT report from this sensor signal:\n\n{signal_json}",
+                }
+            ],
+            tools=[SPOT_TOOL],
+            tool_choice={"type": "tool", "name": "submit_spot_report"},
+        )
+        tool_block = next(b for b in response.content if b.type == "tool_use")
+        spot = tool_block.input
+        log.info(
+            "SPOT generated for modality=%s threat_level=%s",
+            signal.get("modality"),
+            spot.get("threat_level"),
+        )
+        return spot
+
+    except anthropic.APIConnectionError as e:
+        log.error("Claude API connection error: %s", e)
+    except anthropic.RateLimitError as e:
+        log.error("Claude API rate limit: %s", e)
+    except anthropic.APIStatusError as e:
+        log.error("Claude API status error %s: %s", e.status_code, e.message)
+    except (KeyError, StopIteration) as e:
+        log.error("Unexpected Claude response structure: %s", e)
+
+    return None
+
+
 def build_report(signal: dict) -> dict:
-    # TODO: enrich report with additional context or LLM-generated narrative
-    return {
+    spot = generate_spot_report(signal)
+    report = {
         "source_signal_id": signal["_id"],
         "modality": signal["modality"],
         "signal": {k: v for k, v in signal.items() if k not in ("_id", "processed")},
         "created_at": datetime.now(timezone.utc),
         "kg_synced": False,
     }
+    if spot is not None:
+        report["spot_report"] = spot
+    return report

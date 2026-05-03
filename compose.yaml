@@ -48,6 +48,7 @@ services:
     build: ./report-gen
     environment:
       - MONGODB_URI=mongodb://mongo:27017/commonground
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
     depends_on:
       - mongo
     restart: unless-stopped
