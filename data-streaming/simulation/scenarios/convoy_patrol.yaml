@@ -1,0 +1,51 @@
+name: "convoy_patrol"
+description: "3-vehicle convoy patrolling a road; tests sequential UGS detection."
+duration_seconds: 900
+seed: 42
+ao:
+  name: "AO BRAVO"
+  center: [34.050, -118.250]
+  bbox_km: 5.0
+  road_waypoints:
+    - [34.040, -118.250]
+    - [34.060, -118.250]
+sensors:
+  - id: "UGS-001"
+    modality: "ugs"
+    detection_type: "seismic"
+    location: [34.044, -118.250]
+    detection_radius_m: 250
+    false_positive_rate_per_min: 0.05
+  - id: "UGS-002"
+    modality: "ugs"
+    detection_type: "seismic"
+    location: [34.050, -118.250]
+    detection_radius_m: 250
+    false_positive_rate_per_min: 0.05
+  - id: "UGS-003"
+    modality: "ugs"
+    detection_type: "seismic"
+    location: [34.056, -118.250]
+    detection_radius_m: 250
+    false_positive_rate_per_min: 0.05
+  - id: "RF-001"
+    modality: "rf"
+    location: [34.050, -118.245]
+    detection_radius_m: 2000
+    false_positive_rate_per_min: 0.1
+entities:
+  - id: "CONVOY-1"
+    type: "convoy"
+    pattern: "patrol"
+    period_seconds: 180
+    waypoints:
+      - [34.040, -118.250, 0]
+      - [34.060, -118.250, 120]
+      - [34.040, -118.250, 180]
+    rf_signature:
+      bands_mhz: [45.5, 67.2]
+      burst_interval_s: 30
+      tx_power_dbm: 35
+    seismic_signature: 7.5
+    acoustic_signature: 6.0
+    visual_signature: 8.0
