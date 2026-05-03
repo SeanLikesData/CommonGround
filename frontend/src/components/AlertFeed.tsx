@@ -1,13 +1,8 @@
 import { passesAlertFilter, useMapStore } from "@/lib/store";
 import { severityColor } from "@/lib/symbology";
 import { getMapInstance } from "@/lib/mapInstance";
+import { formatDTG } from "@/lib/time";
 import type { AlertEvent } from "@/lib/types";
-
-function formatT(t: number): string {
-  const m = Math.floor(t / 60);
-  const s = Math.floor(t % 60);
-  return `T+${m}:${s.toString().padStart(2, "0")}`;
-}
 
 export default function AlertFeed() {
   const alerts = useMapStore((s) => s.alerts);
@@ -59,7 +54,7 @@ export default function AlertFeed() {
                 {a.severity}
               </span>
               <span className="ml-auto font-mono text-[10px] text-zinc-500">
-                {formatT(a.t)}
+                {formatDTG(a.t)}
               </span>
             </div>
             <div className="text-sm leading-snug text-zinc-100">{a.summary}</div>

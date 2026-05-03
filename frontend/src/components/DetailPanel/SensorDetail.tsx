@@ -1,19 +1,8 @@
 import { useMapStore } from "@/lib/store";
 import { reporterFromSensorId, reporterMeta } from "@/lib/reporters";
 import { severityColor } from "@/lib/symbology";
+import { formatDTG } from "@/lib/time";
 import type { SpotEvent } from "@/lib/types";
-
-function formatT(t: number): string {
-  const sign = t < 0 ? "-" : "+";
-  const abs = Math.abs(t);
-  const days = Math.floor(abs / 86400);
-  const hours = Math.floor((abs % 86400) / 3600);
-  const mins = Math.floor((abs % 3600) / 60);
-  const secs = Math.floor(abs % 60);
-  if (days > 0) return `T${sign}${days}d ${hours.toString().padStart(2, "0")}:${mins.toString().padStart(2, "0")}`;
-  if (hours > 0) return `T${sign}${hours}:${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
-  return `T${sign}${mins}:${secs.toString().padStart(2, "0")}`;
-}
 
 function SpotRow({ spot, onClick }: { spot: SpotEvent; onClick: () => void }) {
   const meta = reporterMeta(spot.source);
@@ -31,7 +20,7 @@ function SpotRow({ spot, onClick }: { spot: SpotEvent; onClick: () => void }) {
           {meta.glyph}
         </span>
         <span className="font-mono text-[10px] text-zinc-500">
-          {formatT(spot.t)}
+          {formatDTG(spot.t)}
         </span>
         <span
           className="ml-auto rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider"

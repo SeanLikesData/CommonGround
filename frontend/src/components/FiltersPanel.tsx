@@ -6,6 +6,7 @@ import {
 } from "@/lib/store";
 import { reporterMeta } from "@/lib/reporters";
 import { severityColor, type Severity } from "@/lib/symbology";
+import { formatDTG } from "@/lib/time";
 import type { LayerId, SpotSource } from "@/lib/types";
 
 const LAYER_GROUPS: { id: LayerId; label: string }[] = [
@@ -24,14 +25,6 @@ const SEVERITY_LABELS: Record<Severity, string> = {
   "med-high": "Med-high",
   high: "High",
 };
-
-function formatT(t: number): string {
-  const totalMin = Math.floor(t / 60);
-  const h = Math.floor(totalMin / 60);
-  const m = totalMin % 60;
-  if (h === 0) return `T+${m}m`;
-  return `T+${h}h${m.toString().padStart(2, "0")}m`;
-}
 
 export default function FiltersPanel() {
   const events = useMapStore((s) => s.events);
@@ -93,9 +86,9 @@ export default function FiltersPanel() {
           )}
         </header>
         <div className="flex items-center justify-between font-mono text-[11px] text-zinc-200">
-          <span>{formatT(lo)}</span>
+          <span>{formatDTG(lo)}</span>
           <span className="text-zinc-500">→</span>
-          <span>{formatT(hi)}</span>
+          <span>{formatDTG(hi)}</span>
         </div>
         <div className="flex flex-col gap-1.5">
           <input
@@ -120,8 +113,8 @@ export default function FiltersPanel() {
           />
         </div>
         <div className="flex justify-between font-mono text-[10px] text-zinc-500">
-          <span>{formatT(bounds.min)}</span>
-          <span>{formatT(bounds.max)}</span>
+          <span>{formatDTG(bounds.min)}</span>
+          <span>{formatDTG(bounds.max)}</span>
         </div>
       </section>
 

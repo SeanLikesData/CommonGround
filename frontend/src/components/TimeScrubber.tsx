@@ -1,20 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { PLAY_DURATIONS, useMapStore, type PlayDuration } from "@/lib/store";
 import { severityColor } from "@/lib/symbology";
-
-// Mission-elapsed time since the start of the loaded window (left edge of
-// the track). Matches the T+m:ss format used in the spot/alert feeds so
-// readings line up across the UI.
-function formatMission(sec: number): string {
-  const s = Math.max(0, Math.floor(sec));
-  const h = Math.floor(s / 3600);
-  const m = Math.floor((s % 3600) / 60);
-  const ss = s % 60;
-  if (h > 0) {
-    return `T+${h}:${m.toString().padStart(2, "0")}:${ss.toString().padStart(2, "0")}`;
-  }
-  return `T+${m}:${ss.toString().padStart(2, "0")}`;
-}
+import { formatDTG } from "@/lib/time";
 
 // "Behind now" delta from the right edge of the track.
 function formatBehind(deltaSec: number): string {
@@ -22,9 +9,14 @@ function formatBehind(deltaSec: number): string {
   const totalMin = Math.floor(deltaSec / 60);
   if (totalMin < 1) return `${Math.floor(deltaSec)}s behind`;
   if (totalMin < 60) return `${totalMin}m behind`;
-  const h = Math.floor(totalMin / 60);
-  const m = totalMin % 60;
-  return `${h}h${m.toString().padStart(2, "0")}m behind`;
+  const totalHr = Math.floor(totalMin / 60);
+  if (totalHr < 24) {
+    const m = totalMin % 60;
+    return `${totalHr}h${m.toString().padStart(2, "0")}m behind`;
+  }
+  const d = Math.floor(totalHr / 24);
+  const h = totalHr % 24;
+  return `${d}d${h.toString().padStart(2, "0")}h behind`;
 }
 
 interface Tick {
@@ -148,7 +140,6 @@ export default function TimeScrubber({ bounds }: Props) {
   const onJumpToNow = () => setCursorT(null);
 
   const deltaFromRight = bounds ? bounds.max - effectiveCursor : 0;
-  const elapsedFromStart = bounds ? effectiveCursor - bounds.min : 0;
   const empty = !bounds || bounds.max <= bounds.min;
 
   return (
@@ -246,13 +237,12 @@ export default function TimeScrubber({ bounds }: Props) {
         Jump to now
       </button>
 
-      <div className="flex w-28 flex-col items-end font-mono text-[11px] leading-tight">
+      <div className="flex w-32 flex-col items-end font-mono text-[11px] leading-tight">
         <span className="text-zinc-100">
-          {formatMission(elapsedFromStart)}
+          {empty ? "—" : formatDTG(effectiveCursor)}
         </span>
         <span className="text-[10px] text-zinc-500">
-          {empty ? "—" : formatBehind(deltaFromRight)} ·{" "}
-          {formatMission(span).replace("T+", "")}
+          {empty ? "—" : formatBehind(deltaFromRight)}
         </span>
       </div>
     </div>

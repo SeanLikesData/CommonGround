@@ -2,13 +2,8 @@ import { passesSpotFilter, useMapStore } from "@/lib/store";
 import { severityColor } from "@/lib/symbology";
 import { reporterMeta } from "@/lib/reporters";
 import { getMapInstance } from "@/lib/mapInstance";
+import { formatDTG } from "@/lib/time";
 import type { SpotEvent } from "@/lib/types";
-
-function formatT(t: number): string {
-  const m = Math.floor(t / 60);
-  const s = Math.floor(t % 60);
-  return `T+${m}:${s.toString().padStart(2, "0")}`;
-}
 
 const SALUTE_LABELS: Record<string, string> = {
   S: "Size",
@@ -102,7 +97,7 @@ export default function SpotFeed() {
                 {e.sensorId ? ` · ${e.sensorId}` : ""}
               </span>
               <span className="ml-auto font-mono text-[10px] text-zinc-500">
-                {formatT(e.t)}
+                {formatDTG(e.t)}
               </span>
             </div>
 
