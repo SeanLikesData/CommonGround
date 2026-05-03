@@ -46,25 +46,26 @@ interface DisplayState {
   hot: Map<string, HotSensor>;
 }
 
-// Geographic offset used for the lollipop fan. ~70m at this latitude — large
-// enough to clear the sensor ring at demo zoom, small enough to read as
-// "attached to" the sensor.
-const FAN_OFFSET_DEG = 0.0007;
+// Lollipop fan rendered in pixel space so the spread stays readable at every
+// zoom level — at low zooms a fixed degree offset collapses to one pixel.
+const FAN_RADIUS_PX = 48;
 const FAN_STEP_DEG = 28;
 
 function fanOffset(
+  map: MapLibreMap,
   sensorCoord: [number, number],
   index: number,
   total: number,
 ): [number, number] {
   const stepRad = (FAN_STEP_DEG * Math.PI) / 180;
-  const baseAngle = Math.PI / 2; // north
+  const baseAngle = -Math.PI / 2; // screen-space "up" (y grows downward)
   const a = baseAngle + (index - (total - 1) / 2) * stepRad;
-  const latCorrection = Math.cos((sensorCoord[1] * Math.PI) / 180) || 1;
-  return [
-    sensorCoord[0] + (Math.cos(a) * FAN_OFFSET_DEG) / latCorrection,
-    sensorCoord[1] + Math.sin(a) * FAN_OFFSET_DEG,
-  ];
+  const origin = map.project(sensorCoord);
+  const point = map.unproject([
+    origin.x + Math.cos(a) * FAN_RADIUS_PX,
+    origin.y + Math.sin(a) * FAN_RADIUS_PX,
+  ]);
+  return [point.lng, point.lat];
 }
 
 function spotFeature(s: SpotEvent, coord: [number, number]): GeoJSON.Feature {
@@ -84,6 +85,7 @@ function computeDisplay(
   events: SpotEvent[],
   sensorIndex: SensorIndex,
   mode: SpotDisplayMode,
+  map: MapLibreMap | null,
 ): DisplayState {
   const bySensor = new Map<string, SpotEvent[]>();
   const freeStanding: SpotEvent[] = [];
@@ -109,14 +111,14 @@ function computeDisplay(
   );
   const leaderFeatures: GeoJSON.Feature[] = [];
 
-  if (mode === "offset") {
+  if (mode === "offset" && map) {
     // Sensor-attached spots fan out from the sensor with a leader line.
     for (const [label, list] of bySensor) {
       const coord = sensorIndex.coords.get(label);
       if (!coord) continue;
       const sorted = [...list].sort((a, b) => a.t - b.t);
       sorted.forEach((s, i) => {
-        const off = fanOffset(coord, i, sorted.length);
+        const off = fanOffset(map, coord, i, sorted.length);
         spotFeatures.push(spotFeature(s, off));
         leaderFeatures.push({
           type: "Feature",
@@ -176,10 +178,15 @@ export default function MapCanvas() {
     coords: new Map(),
     isTrailCam: new Set(),
   });
+  // Bumped on every map "move" so lollipop offsets recompute against the
+  // current pixel-space projection (zoom, pan, pitch all change it).
+  const [viewTick, setViewTick] = useState(0);
 
   const display = useMemo(
-    () => computeDisplay(events, sensorIndex, spotDisplayMode),
-    [events, sensorIndex, spotDisplayMode],
+    () => computeDisplay(events, sensorIndex, spotDisplayMode, mapRef.current),
+    // viewTick is intentionally a dep: recomputes pixel-space lollipop fans.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [events, sensorIndex, spotDisplayMode, viewTick, styleReady],
   );
 
   useEffect(() => {
@@ -553,6 +560,19 @@ export default function MapCanvas() {
       setStyleReady(false);
     };
   }, [setSelection]);
+
+  // Recompute lollipop offsets while the map is moving (zoom/pan/pitch).
+  // Only attached in "offset" mode — the other modes don't depend on the
+  // viewport projection.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !styleReady || spotDisplayMode !== "offset") return;
+    const bump = () => setViewTick((t) => t + 1);
+    map.on("move", bump);
+    return () => {
+      map.off("move", bump);
+    };
+  }, [styleReady, spotDisplayMode]);
 
   // Push the computed spots + leaders into their sources whenever the
   // display state changes (events, sensor index, or display mode).
