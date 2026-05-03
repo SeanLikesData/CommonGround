@@ -2,7 +2,6 @@ import AgentPanel from "@/components/AgentPanel";
 import DetailPanel from "@/components/DetailPanel";
 import LeftPanel from "@/components/LeftPanel";
 import MapCanvas from "@/components/MapCanvas";
-import ModeBadge from "@/components/ModeBadge";
 import NavRail from "@/components/NavRail";
 import SpotLegend from "@/components/SpotLegend";
 import { useFlyToOnAlert } from "@/lib/useFlyToOnAlert";
@@ -18,7 +17,6 @@ export default function App() {
       <LeftPanel />
       <div className="relative flex-1 overflow-hidden">
         <MapCanvas />
-        <ModeBadge />
         <div className="pointer-events-none absolute right-3 top-3 z-30 flex max-h-[calc(100vh-1.5rem)] flex-col items-end gap-2 overflow-y-auto pr-0.5">
           <SpotLegend />
           <DetailPanel />
