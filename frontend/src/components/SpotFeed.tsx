@@ -10,6 +10,38 @@ function formatT(t: number): string {
   return `T+${m}:${s.toString().padStart(2, "0")}`;
 }
 
+const SALUTE_LABELS: Record<string, string> = {
+  S: "Size",
+  A: "Activity",
+  L: "Location",
+  U: "Unit",
+  T: "Time",
+  E: "Equipment",
+};
+
+interface SaluteField {
+  key: string;
+  label: string;
+  value: string;
+}
+
+// Parse the seed's `;`-delimited "S: …; A: …" form. Returns null if it doesn't
+// look like SALUTE so the caller can fall back to rendering the raw string.
+function parseSalute(raw: string): SaluteField[] | null {
+  const parts = raw.split(/;\s*/).map((p) => p.trim()).filter(Boolean);
+  if (parts.length < 2) return null;
+  const fields: SaluteField[] = [];
+  for (const part of parts) {
+    const m = part.match(/^([A-Za-z])\s*:\s*(.+)$/);
+    if (!m) return null;
+    const key = m[1].toUpperCase();
+    const label = SALUTE_LABELS[key];
+    if (!label) return null;
+    fields.push({ key, label, value: m[2].trim() });
+  }
+  return fields;
+}
+
 export default function SpotFeed() {
   const events = useMapStore((s) => s.events);
   const selection = useMapStore((s) => s.selection);
@@ -35,12 +67,12 @@ export default function SpotFeed() {
       {sorted.map((e) => {
         const active = selection?.kind === "spot" && selection.id === e.id;
         const meta = reporterMeta(e.source);
-        const firstLine = e.salute.split("\n")[0] ?? e.salute;
+        const fields = parseSalute(e.salute);
         return (
           <button
             key={e.id}
             onClick={() => onClick(e)}
-            className={`flex w-full flex-col gap-1 border-b border-zinc-800/70 px-3 py-2 text-left transition-colors ${
+            className={`flex w-full flex-col gap-2 border-b border-zinc-800/70 px-3 py-3 text-left transition-colors ${
               active ? "bg-cyan-500/10" : "hover:bg-zinc-800/60"
             }`}
           >
@@ -63,11 +95,26 @@ export default function SpotFeed() {
                 {formatT(e.t)}
               </span>
             </div>
-            <div className="line-clamp-2 font-mono text-xs leading-snug text-zinc-200">
-              {firstLine}
-            </div>
+
+            {fields ? (
+              <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs leading-snug">
+                {fields.map((f) => (
+                  <div key={f.key} className="contents">
+                    <dt className="font-mono text-[10px] uppercase tracking-wider text-zinc-500">
+                      {f.label}
+                    </dt>
+                    <dd className="text-zinc-200">{f.value}</dd>
+                  </div>
+                ))}
+              </dl>
+            ) : (
+              <div className="whitespace-pre-wrap font-mono text-xs leading-snug text-zinc-200">
+                {e.salute}
+              </div>
+            )}
+
             {e.quote && (
-              <div className="line-clamp-1 text-[10px] italic text-zinc-500">
+              <div className="border-l-2 border-cyan-400/50 pl-2 text-[11px] italic leading-snug text-zinc-400">
                 “{e.quote}”
               </div>
             )}
