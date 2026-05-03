@@ -34,6 +34,16 @@ services:
       - mongo
     restart: unless-stopped
 
+  api:
+    build: ./api
+    ports:
+      - "8000:8000"
+    environment:
+      - MONGODB_URI=mongodb://mongo:27017/commonground
+    depends_on:
+      - mongo
+    restart: unless-stopped
+
   report-gen:
     build: ./report-gen
     environment:
