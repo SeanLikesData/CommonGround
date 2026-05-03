@@ -14,15 +14,18 @@ NARRATIVE_KEYS = ("narrative", "salute_narrative", "salute")
 
 
 def _extract_narrative(report: dict) -> Optional[str]:
-    for key in NARRATIVE_KEYS:
-        value = report.get(key)
-        if value:
-            return value
-    signal = report.get("signal", {})
-    for key in NARRATIVE_KEYS:
-        value = signal.get(key)
-        if value:
-            return value
+    # report-gen writes the SALUTE narrative under report.spot_report.narrative;
+    # earlier code paths used top-level or signal-level keys. Check all three.
+    containers = (
+        report.get("spot_report") or {},
+        report,
+        report.get("signal") or {},
+    )
+    for container in containers:
+        for key in NARRATIVE_KEYS:
+            value = container.get(key)
+            if value:
+                return value
     return None
 
 
