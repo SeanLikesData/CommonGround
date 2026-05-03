@@ -1,4 +1,4 @@
-import { useMapStore } from "@/lib/store";
+import { passesSpotFilter, useMapStore } from "@/lib/store";
 import { severityColor } from "@/lib/symbology";
 import { reporterMeta } from "@/lib/reporters";
 import { getMapInstance } from "@/lib/mapInstance";
@@ -46,8 +46,15 @@ export default function SpotFeed() {
   const events = useMapStore((s) => s.events);
   const selection = useMapStore((s) => s.selection);
   const setSelection = useMapStore((s) => s.setSelection);
+  const timeMin = useMapStore((s) => s.timeMin);
+  const timeMax = useMapStore((s) => s.timeMax);
+  const severityFilter = useMapStore((s) => s.severityFilter);
+  const sourceFilter = useMapStore((s) => s.sourceFilter);
 
-  const sorted = [...events].sort((a, b) => b.t - a.t);
+  const filterState = { timeMin, timeMax, severityFilter, sourceFilter };
+  const sorted = events
+    .filter((e) => passesSpotFilter(e, filterState))
+    .sort((a, b) => b.t - a.t);
 
   const onClick = (e: SpotEvent) => {
     setSelection({ kind: "spot", id: e.id });
@@ -61,7 +68,9 @@ export default function SpotFeed() {
     <div className="flex h-full flex-col">
       {sorted.length === 0 && (
         <div className="px-3 py-6 text-center text-xs text-zinc-500">
-          No spot reports yet.
+          {events.length === 0
+            ? "No spot reports yet."
+            : "No spot reports match the current filters."}
         </div>
       )}
       {sorted.map((e) => {

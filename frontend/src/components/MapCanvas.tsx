@@ -11,7 +11,12 @@ import {
   satelliteStyleUrl,
   terrainSource,
 } from "@/lib/mapStyle";
-import { useMapStore, type SpotDisplayMode } from "@/lib/store";
+import {
+  passesAlertFilter,
+  passesSpotFilter,
+  useMapStore,
+  type SpotDisplayMode,
+} from "@/lib/store";
 import { colors, severityColor, type Severity } from "@/lib/symbology";
 import { setMapInstance } from "@/lib/mapInstance";
 import type { AlertEvent, SpotEvent } from "@/lib/types";
@@ -165,12 +170,36 @@ export default function MapCanvas() {
   const mapRef = useRef<MapLibreMap | null>(null);
   const [styleReady, setStyleReady] = useState(false);
 
-  const events = useMapStore((s) => s.events);
-  const alerts = useMapStore((s) => s.alerts);
+  const allEvents = useMapStore((s) => s.events);
+  const allAlerts = useMapStore((s) => s.alerts);
   const setSelection = useMapStore((s) => s.setSelection);
   const visibleLayers = useMapStore((s) => s.visibleLayers);
   const chatOpen = useMapStore((s) => s.chatOpen);
   const spotDisplayMode = useMapStore((s) => s.spotDisplayMode);
+  const timeMin = useMapStore((s) => s.timeMin);
+  const timeMax = useMapStore((s) => s.timeMax);
+  const severityFilter = useMapStore((s) => s.severityFilter);
+  const sourceFilter = useMapStore((s) => s.sourceFilter);
+
+  const events = useMemo(
+    () =>
+      allEvents.filter((e) =>
+        passesSpotFilter(e, {
+          timeMin,
+          timeMax,
+          severityFilter,
+          sourceFilter,
+        }),
+      ),
+    [allEvents, timeMin, timeMax, severityFilter, sourceFilter],
+  );
+  const alerts = useMemo(
+    () =>
+      allAlerts.filter((a) =>
+        passesAlertFilter(a, { timeMin, timeMax, severityFilter }),
+      ),
+    [allAlerts, timeMin, timeMax, severityFilter],
+  );
   const markersRef = useRef<Map<string, maplibregl.Marker>>(new Map());
   const sensorPulseRef = useRef<Map<string, maplibregl.Marker>>(new Map());
   const [sensorIndex, setSensorIndex] = useState<SensorIndex>({

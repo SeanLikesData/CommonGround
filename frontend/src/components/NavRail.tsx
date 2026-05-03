@@ -66,6 +66,25 @@ const ITEMS: RailItem[] = [
     ),
   },
   {
+    id: "filters",
+    label: "Filters",
+    icon: (
+      <svg
+        className={ICON_CLASS}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={1.7}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M3 5h18" />
+        <path d="M6 12h12" />
+        <path d="M10 19h4" />
+      </svg>
+    ),
+  },
+  {
     id: "graph",
     label: "Graph",
     icon: (

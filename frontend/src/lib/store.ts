@@ -1,20 +1,32 @@
 import { create } from "zustand";
+import type { Severity } from "./symbology";
 import type {
   AlertEvent,
   LayerId,
   MemoryEntry,
   Selection,
   SpotEvent,
+  SpotSource,
 } from "./types";
 
 export type LeftPanelId =
   | "alerts"
   | "spots"
   | "layers"
+  | "filters"
   | "graph"
   | "memory"
   | "settings";
 export type SpotDisplayMode = "merge" | "offset" | "cluster";
+
+export const ALL_SEVERITIES: Severity[] = ["low", "med", "med-high", "high"];
+export const ALL_SOURCES: SpotSource[] = [
+  "ugs",
+  "rf",
+  "drone",
+  "human",
+  "trail-cam",
+];
 
 const DEFAULT_LEFT_PANEL_WIDTH = 320;
 export const MIN_LEFT_PANEL_WIDTH = 240;
@@ -31,6 +43,10 @@ interface MapState {
   leftPanelWidth: number;
   autoFlyToAlerts: boolean;
   spotDisplayMode: SpotDisplayMode;
+  timeMin: number | null;
+  timeMax: number | null;
+  severityFilter: Set<Severity>;
+  sourceFilter: Set<SpotSource>;
 
   addSpot: (e: SpotEvent) => void;
   addAlert: (a: AlertEvent) => void;
@@ -44,6 +60,10 @@ interface MapState {
   setLeftPanelWidth: (w: number) => void;
   setAutoFlyToAlerts: (v: boolean) => void;
   setSpotDisplayMode: (m: SpotDisplayMode) => void;
+  setTimeRange: (min: number | null, max: number | null) => void;
+  toggleSeverityFilter: (s: Severity) => void;
+  toggleSourceFilter: (s: SpotSource) => void;
+  resetFilters: () => void;
 }
 
 const ALL_LAYERS: LayerId[] = [
@@ -68,6 +88,10 @@ export const useMapStore = create<MapState>((set) => ({
   leftPanelWidth: DEFAULT_LEFT_PANEL_WIDTH,
   autoFlyToAlerts: true,
   spotDisplayMode: "merge",
+  timeMin: null,
+  timeMax: null,
+  severityFilter: new Set(ALL_SEVERITIES),
+  sourceFilter: new Set(ALL_SOURCES),
 
   addSpot: (e) => set((st) => ({ events: [...st.events, e] })),
   addAlert: (a) => set((st) => ({ alerts: [...st.alerts, a] })),
@@ -89,4 +113,47 @@ export const useMapStore = create<MapState>((set) => ({
     set({ leftPanelWidth: Math.max(MIN_LEFT_PANEL_WIDTH, w) }),
   setAutoFlyToAlerts: (v) => set({ autoFlyToAlerts: v }),
   setSpotDisplayMode: (m) => set({ spotDisplayMode: m }),
+  setTimeRange: (min, max) => set({ timeMin: min, timeMax: max }),
+  toggleSeverityFilter: (s) =>
+    set((st) => {
+      const next = new Set(st.severityFilter);
+      if (next.has(s)) next.delete(s);
+      else next.add(s);
+      return { severityFilter: next };
+    }),
+  toggleSourceFilter: (s) =>
+    set((st) => {
+      const next = new Set(st.sourceFilter);
+      if (next.has(s)) next.delete(s);
+      else next.add(s);
+      return { sourceFilter: next };
+    }),
+  resetFilters: () =>
+    set({
+      timeMin: null,
+      timeMax: null,
+      severityFilter: new Set(ALL_SEVERITIES),
+      sourceFilter: new Set(ALL_SOURCES),
+    }),
 }));
+
+export function passesSpotFilter(
+  e: SpotEvent,
+  state: Pick<MapState, "timeMin" | "timeMax" | "severityFilter" | "sourceFilter">,
+): boolean {
+  if (state.timeMin !== null && e.t < state.timeMin) return false;
+  if (state.timeMax !== null && e.t > state.timeMax) return false;
+  if (!state.severityFilter.has(e.severity)) return false;
+  if (!state.sourceFilter.has(e.source)) return false;
+  return true;
+}
+
+export function passesAlertFilter(
+  a: AlertEvent,
+  state: Pick<MapState, "timeMin" | "timeMax" | "severityFilter">,
+): boolean {
+  if (state.timeMin !== null && a.t < state.timeMin) return false;
+  if (state.timeMax !== null && a.t > state.timeMax) return false;
+  if (!state.severityFilter.has(a.severity)) return false;
+  return true;
+}

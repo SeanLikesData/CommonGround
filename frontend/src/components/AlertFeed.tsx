@@ -1,4 +1,4 @@
-import { useMapStore } from "@/lib/store";
+import { passesAlertFilter, useMapStore } from "@/lib/store";
 import { severityColor } from "@/lib/symbology";
 import { getMapInstance } from "@/lib/mapInstance";
 import type { AlertEvent } from "@/lib/types";
@@ -13,8 +13,14 @@ export default function AlertFeed() {
   const alerts = useMapStore((s) => s.alerts);
   const selection = useMapStore((s) => s.selection);
   const setSelection = useMapStore((s) => s.setSelection);
+  const timeMin = useMapStore((s) => s.timeMin);
+  const timeMax = useMapStore((s) => s.timeMax);
+  const severityFilter = useMapStore((s) => s.severityFilter);
 
-  const sorted = [...alerts].sort((a, b) => b.t - a.t);
+  const filterState = { timeMin, timeMax, severityFilter };
+  const sorted = alerts
+    .filter((a) => passesAlertFilter(a, filterState))
+    .sort((a, b) => b.t - a.t);
 
   const onClick = (a: AlertEvent) => {
     setSelection({ kind: "alert", id: a.id });
@@ -28,7 +34,9 @@ export default function AlertFeed() {
     <div className="flex h-full flex-col">
       {sorted.length === 0 && (
         <div className="px-3 py-6 text-center text-xs text-zinc-500">
-          No alerts yet.
+          {alerts.length === 0
+            ? "No alerts yet."
+            : "No alerts match the current filters."}
         </div>
       )}
       {sorted.map((a) => {

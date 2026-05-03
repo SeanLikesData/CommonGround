@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef } from "react";
 import AlertFeed from "@/components/AlertFeed";
+import FiltersPanel from "@/components/FiltersPanel";
 import GraphView from "@/components/GraphView";
 import LayerToggle from "@/components/LayerToggle";
 import MemoryView from "@/components/MemoryView";
@@ -15,6 +16,7 @@ const TITLES: Record<LeftPanelId, string> = {
   alerts: "Alerts",
   spots: "Spot reports",
   layers: "Layers",
+  filters: "Filters",
   graph: "Knowledge graph",
   memory: "Memory",
   settings: "Settings",
@@ -28,6 +30,13 @@ export default function LeftPanel() {
   const alertCount = useMapStore((s) => s.alerts.length);
   const spotCount = useMapStore((s) => s.events.length);
   const memoryCount = useMapStore((s) => s.memory.length);
+  const filtersDirty = useMapStore(
+    (s) =>
+      s.timeMin !== null ||
+      s.timeMax !== null ||
+      s.severityFilter.size !== 4 ||
+      s.sourceFilter.size !== 5,
+  );
 
   const draggingRef = useRef(false);
 
@@ -72,7 +81,9 @@ export default function LeftPanel() {
         ? spotCount
         : active === "memory"
           ? memoryCount
-          : null;
+          : active === "filters" && filtersDirty
+            ? "•"
+            : null;
 
   return (
     <aside
@@ -103,6 +114,7 @@ export default function LeftPanel() {
         {active === "alerts" && <AlertFeed />}
         {active === "spots" && <SpotFeed />}
         {active === "layers" && <LayerToggle />}
+        {active === "filters" && <FiltersPanel />}
         {active === "graph" && <GraphView />}
         {active === "memory" && <MemoryView />}
         {active === "settings" && <SettingsPanel />}
