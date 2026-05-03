@@ -57,7 +57,7 @@ const SEVERITY_BY_THREAT: Record<string, Severity> = {
 // Anchor for converting wall-clock timestamps to scenario-relative seconds.
 // Captured from the first report seen so playback math stays unchanged.
 let epochMs: number | null = null;
-let latestSignalMs = 0;
+let latestCreatedAtMs = 0;
 
 function truncate(text: string, max: number): string {
   const trimmed = text.trim();
@@ -87,7 +87,10 @@ function mapReport(r: ApiReport): SpotEvent | null {
   if (Number.isNaN(ts)) return null;
 
   if (epochMs === null || ts < epochMs) epochMs = ts;
-  if (ts > latestSignalMs) latestSignalMs = ts;
+  const createdMs = Date.parse(r.created_at);
+  if (!Number.isNaN(createdMs) && createdMs > latestCreatedAtMs) {
+    latestCreatedAtMs = createdMs;
+  }
 
   const sp = r.spot_report;
   const severity: Severity =
@@ -121,9 +124,11 @@ export async function fetchSpotReports(since?: Date): Promise<SpotEvent[]> {
   return events;
 }
 
-// Latest source-signal timestamp seen so far, for `since=` polling.
-export function getLatestSignalTimestamp(): Date | null {
-  return latestSignalMs > 0 ? new Date(latestSignalMs) : null;
+// Latest report `created_at` seen so far, for `since=` polling. We track
+// when the report was written rather than when the source signal occurred,
+// because report-gen processes signals out of order.
+export function getLatestReportCreatedAt(): Date | null {
+  return latestCreatedAtMs > 0 ? new Date(latestCreatedAtMs) : null;
 }
 
 export function fetchAlerts(): Promise<AlertEvent[]> {

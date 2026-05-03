@@ -68,6 +68,8 @@ def get_reports(
     since: Optional[datetime] = None,
     limit: int = Query(100, ge=1, le=500),
 ) -> list[dict]:
-    # Reports have no top-level timestamp; sort/filter by the embedded
-    # source-signal timestamp so newest reports come first.
-    return fetch(db["reports"], since, limit, "signal.timestamp")
+    # Filter/sort by `created_at` (when the report was written) rather than
+    # the embedded signal timestamp. report-gen processes signals out of
+    # order, so a `since` filter on signal.timestamp silently drops newly
+    # written reports whose source signal predates the polling cursor.
+    return fetch(db["reports"], since, limit, "created_at")

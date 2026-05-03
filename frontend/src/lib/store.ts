@@ -105,22 +105,8 @@ export const useMapStore = create<MapState>((set) => ({
   playing: false,
   playDuration: 10,
 
-  addSpot: (e) =>
-    set((st) => ({
-      events: [...st.events, e],
-      cursorT:
-        !st.playing && st.cursorT !== null && e.t > st.cursorT
-          ? e.t
-          : st.cursorT,
-    })),
-  addAlert: (a) =>
-    set((st) => ({
-      alerts: [...st.alerts, a],
-      cursorT:
-        !st.playing && st.cursorT !== null && a.t > st.cursorT
-          ? a.t
-          : st.cursorT,
-    })),
+  addSpot: (e) => set((st) => ({ events: [...st.events, e] })),
+  addAlert: (a) => set((st) => ({ alerts: [...st.alerts, a] })),
   addMemory: (m) => set((st) => ({ memory: [...st.memory, m] })),
   setSelection: (s) => set({ selection: s }),
   toggleLayer: (id) =>
