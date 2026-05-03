@@ -15,14 +15,14 @@ SPOT_TOOL = {
     "input_schema": {
         "type": "object",
         "properties": {
-            "size":                 {"type": "string", "description": "Number and type of contacts observed"},
-            "activity":             {"type": "string", "description": "What was observed happening"},
-            "location_description": {"type": "string", "description": "Human-readable location summary"},
-            "unit":                 {"type": "string", "description": "Identified unit or force; 'UNKNOWN' if not determinable"},
-            "time_dtg":             {"type": "string", "description": "Date-time group in format DDHHMMZMonYYYY"},
-            "equipment":            {"type": "string", "description": "Platforms and assets identified"},
+            "size":                 {"type": "string", "description": "Plain-language count and type of contacts (e.g. '2 vehicles', '1 small boat'). Avoid acronyms; spell out platform types when known."},
+            "activity":             {"type": "string", "description": "What the contact is doing, in plain English (e.g. 'moving north along the ridgeline', 'loitering near the inlet'). One short sentence, no jargon."},
+            "location_description": {"type": "string", "description": "Where it is, described the way an operator would say it out loud: nearest landmark, road, or terrain feature first, then approximate lat/lon to 3 decimals in parentheses. No raw geohash."},
+            "unit":                 {"type": "string", "description": "Best-guess identification of the unit or force. Use 'Unknown' if it can't be determined; do not invent unit designators."},
+            "time_dtg":             {"type": "string", "description": "Date-time group in format DDHHMMZMonYYYY (e.g. '031430ZMay2026')."},
+            "equipment":            {"type": "string", "description": "Platforms and assets in plain language. If a military designator is used (e.g. 'BTR-80'), append a short gloss in parentheses (e.g. 'BTR-80 (Russian armored personnel carrier)'). Comma-separated list."},
             "threat_level":         {"type": "string", "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"], "description": "Assessed threat level"},
-            "narrative":            {"type": "string", "description": "Full tactical assessment paragraph"},
+            "narrative":            {"type": "string", "description": "A 2-4 sentence tactical assessment written for a busy human operator. Lead with the bottom line: what is happening and why it matters. Then briefly state the supporting evidence from the signal and any immediate implication or recommended watch item. Plain English, no acronyms beyond universally known ones (RF is fine; FMV, BDA, multi-INT are not). No bullet markup — flowing prose."},
         },
         "required": [
             "size", "activity", "location_description", "unit",
