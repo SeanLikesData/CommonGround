@@ -9,7 +9,7 @@ const ALERTS_URL = "/data/alerts.json";
 const MEMORIES_URL = "/data/memories.json";
 
 async function fetchJson<T>(url: string): Promise<T> {
-  const res = await fetch(url);
+  const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) throw new Error(`fetch ${url}: ${res.status} ${res.statusText}`);
   return (await res.json()) as T;
 }
