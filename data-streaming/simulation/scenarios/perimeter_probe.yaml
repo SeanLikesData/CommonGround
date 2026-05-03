@@ -1,0 +1,63 @@
+name: "perimeter_probe"
+description: "Single lone actor creeps along a base perimeter; tests slow-pattern detection."
+duration_seconds: 600
+seed: 7
+ao:
+  name: "AO ALPHA"
+  center: [34.050, -118.250]
+  bbox_km: 2.0
+  base_perimeter:
+    - [34.048, -118.252]
+    - [34.0494, -118.252]
+    - [34.0494, -118.2503]
+    - [34.048, -118.2503]
+sensors:
+  # Five UGS in a rough rectangle around center (~150 m x 148 m box)
+  - id: "UGS-P1"
+    modality: "ugs"
+    detection_type: "seismic"
+    location: [34.048, -118.252]
+    detection_radius_m: 150
+    false_positive_rate_per_min: 0.05
+  - id: "UGS-P2"
+    modality: "ugs"
+    detection_type: "seismic"
+    location: [34.0487, -118.252]
+    detection_radius_m: 150
+    false_positive_rate_per_min: 0.05
+  - id: "UGS-P3"
+    modality: "ugs"
+    detection_type: "seismic"
+    location: [34.0494, -118.2512]
+    detection_radius_m: 150
+    false_positive_rate_per_min: 0.05
+  - id: "UGS-P4"
+    modality: "ugs"
+    detection_type: "seismic"
+    location: [34.049, -118.2503]
+    detection_radius_m: 150
+    false_positive_rate_per_min: 0.05
+  - id: "UGS-P5"
+    modality: "ugs"
+    detection_type: "seismic"
+    location: [34.048, -118.2512]
+    detection_radius_m: 150
+    false_positive_rate_per_min: 0.05
+entities:
+  # Lone actor walks the perimeter at ~1 m/s; total path ~596 m over 596 s
+  - id: "LONE-ACTOR-1"
+    type: "lone_actor"
+    pattern: "one_shot"
+    waypoints:
+      # SW corner -> NW corner (150 m north, 150 s)
+      - [34.048,  -118.252,   0]
+      - [34.0494, -118.252,  150]
+      # NW -> NE (148 m east, 148 s)
+      - [34.0494, -118.2503, 298]
+      # NE -> SE (150 m south, 150 s)
+      - [34.048,  -118.2503, 448]
+      # SE -> SW (148 m west, 148 s)
+      - [34.048,  -118.252,  596]
+    seismic_signature: 3.0
+    acoustic_signature: 2.5
+    visual_signature: 4.0
