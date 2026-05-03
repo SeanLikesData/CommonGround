@@ -60,7 +60,8 @@ export default function GraphView() {
     try {
       const res = await fetch(`${AGENT_URL}/graph?limit=400`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const payload = (await res.json()) as GraphPayload;
+      const payload = (await res.json()) as GraphPayload & { error?: string };
+      if (payload.error) throw new Error(payload.error);
       const degree = new Map<string, number>();
       for (const l of payload.links) {
         const s = typeof l.source === "string" ? l.source : l.source.id;

@@ -169,23 +169,27 @@ LIMIT $limit
 def graph(limit: int = Query(300, ge=1, le=1000)) -> dict:
     nodes: dict[str, dict] = {}
     links: list[dict] = []
-    with driver().session() as session:
-        for row in session.run(GRAPH_QUERY, {"limit": limit}):
-            for side in ("n", "m"):
-                nid = row[f"{side}_id"]
-                if nid in nodes:
-                    continue
-                labels = row[f"{side}_labels"]
-                nodes[nid] = {
-                    "id": nid,
-                    "label": labels[0] if labels else "Node",
-                    "props": serialize(dict(row[side])),
-                }
-            links.append(
-                {
-                    "source": row["n_id"],
-                    "target": row["m_id"],
-                    "type": row["r_type"],
-                }
-            )
+    try:
+        with driver().session() as session:
+            for row in session.run(GRAPH_QUERY, {"limit": limit}):
+                for side in ("n", "m"):
+                    nid = row[f"{side}_id"]
+                    if nid in nodes:
+                        continue
+                    labels = row[f"{side}_labels"]
+                    nodes[nid] = {
+                        "id": nid,
+                        "label": labels[0] if labels else "Node",
+                        "props": serialize(dict(row[side])),
+                    }
+                links.append(
+                    {
+                        "source": row["n_id"],
+                        "target": row["m_id"],
+                        "type": row["r_type"],
+                    }
+                )
+    except Exception as e:
+        log.error("graph: query failed: %s", e)
+        return {"nodes": [], "links": [], "error": str(e)}
     return {"nodes": list(nodes.values()), "links": links}
