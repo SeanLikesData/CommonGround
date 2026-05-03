@@ -1,0 +1,68 @@
+import { passesAlertFilter, useMapStore } from "@/lib/store";
+import { severityColor } from "@/lib/symbology";
+import { getMapInstance } from "@/lib/mapInstance";
+import { formatDTG } from "@/lib/time";
+import type { AlertEvent } from "@/lib/types";
+
+export default function AlertFeed() {
+  const alerts = useMapStore((s) => s.alerts);
+  const selection = useMapStore((s) => s.selection);
+  const setSelection = useMapStore((s) => s.setSelection);
+  const severityFilter = useMapStore((s) => s.severityFilter);
+  const cursorT = useMapStore((s) => s.cursorT);
+
+  const filterState = { severityFilter, cursorT };
+  const sorted = alerts
+    .filter((a) => passesAlertFilter(a, filterState))
+    .sort((a, b) => b.t - a.t);
+
+  const onClick = (a: AlertEvent) => {
+    setSelection({ kind: "alert", id: a.id });
+    const map = getMapInstance();
+    if (map) {
+      map.flyTo({ center: a.location, zoom: 14, speed: 0.8 });
+    }
+  };
+
+  return (
+    <div className="flex h-full flex-col">
+      {sorted.length === 0 && (
+        <div className="px-3 py-6 text-center text-xs text-zinc-500">
+          {alerts.length === 0
+            ? "No alerts yet."
+            : "No alerts match the current filters."}
+        </div>
+      )}
+      {sorted.map((a) => {
+        const active = selection?.kind === "alert" && selection.id === a.id;
+        return (
+          <button
+            key={a.id}
+            onClick={() => onClick(a)}
+            className={`flex w-full flex-col gap-1 border-b border-zinc-800/70 px-3 py-2 text-left transition-colors ${
+              active ? "bg-cyan-500/10" : "hover:bg-zinc-800/60"
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <span
+                className="inline-block h-2 w-2 rounded-full"
+                style={{ backgroundColor: severityColor(a.severity) }}
+              />
+              <span className="text-[10px] uppercase tracking-wider text-zinc-400">
+                {a.severity}
+              </span>
+              <span className="ml-auto font-mono text-[10px] text-zinc-500">
+                {formatDTG(a.t)}
+              </span>
+            </div>
+            <div className="text-sm leading-snug text-zinc-100">{a.summary}</div>
+            <div className="text-[10px] text-zinc-500">
+              {a.contributingSpotIds.length} contributing reports ·{" "}
+              {a.citedMemoryIds.length} cited memories
+            </div>
+          </button>
+        );
+      })}
+    </div>
+  );
+}

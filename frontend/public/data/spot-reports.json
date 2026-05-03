@@ -1,0 +1,494 @@
+[
+  {
+    "id": "spot-db-001",
+    "t": 1800,
+    "location": [44.312, 34.418],
+    "severity": "low",
+    "source": "i-ugs",
+    "sensorId": "IUGS-1",
+    "salute": "S: 1 dismount; A: walking E along game trail; L: IUGS-1 (W ridge); U: civilian dress; T: 00:30Z; E: routine foot traffic",
+    "quote": "Lone shepherd, no weapons visible."
+  },
+  {
+    "id": "spot-db-002",
+    "t": 4200,
+    "location": [44.401, 34.476],
+    "severity": "low",
+    "source": "ugs",
+    "sensorId": "UGS-C",
+    "salute": "S: 1-2 dismounts; A: foot movement N; L: UGS-C (NE corridor); U: unknown; T: 01:10Z; E: seismic trip",
+    "quote": "Single seismic trip, low confidence."
+  },
+  {
+    "id": "spot-db-003",
+    "t": 9600,
+    "location": [44.428, 34.461],
+    "severity": "low",
+    "source": "drone",
+    "sensorId": "UAS-1",
+    "salute": "S: 1 vehicle; A: stationary; L: NAI-7 vicinity; U: civilian pickup; T: 02:40Z; E: parked, no occupants visible",
+    "quote": "Truck pulled off MSR, possibly mechanical."
+  },
+  {
+    "id": "spot-db-004",
+    "t": 14400,
+    "location": [44.355, 34.443],
+    "severity": "low",
+    "source": "i-ugs",
+    "sensorId": "IUGS-2",
+    "salute": "S: ~12 head livestock; A: grazing; L: IUGS-2 (S basin); U: N/A; T: 04:00Z; E: routine herd movement",
+    "quote": "Goat herd with one shepherd."
+  },
+  {
+    "id": "spot-db-005",
+    "t": 16500,
+    "location": [44.420, 34.456],
+    "severity": "low",
+    "source": "ugs",
+    "sensorId": "UGS-A",
+    "salute": "S: 1-2 dismounts; A: foot movement; L: UGS-A grid; U: unknown; T: 04:35Z; E: seismic+acoustic trip",
+    "quote": "Seismic signature consistent with single-file foot movement, ~2 persons."
+  },
+  {
+    "id": "spot-db-006",
+    "t": 16527,
+    "location": [44.413, 34.452],
+    "severity": "low",
+    "source": "ugs",
+    "sensorId": "UGS-B",
+    "salute": "S: 2 dismounts; A: foot movement SW→NE; L: UGS-B grid; U: unknown; T: 04:35Z; E: seismic trip",
+    "quote": "Bearing consistent with movement up-wadi toward NAI-7."
+  },
+  {
+    "id": "spot-db-007",
+    "t": 16563,
+    "location": [44.438, 34.452],
+    "severity": "med",
+    "source": "rf",
+    "sensorId": "RF-1",
+    "salute": "S: unknown; A: 3x burst transmission UHF 412 MHz; L: RF-1 grid; U: unknown; T: 04:36Z; E: encrypted handshake pattern",
+    "quote": "Burst pattern matches pre-staging comms profile from prior Hamrin incidents."
+  },
+  {
+    "id": "spot-db-008",
+    "t": 16620,
+    "location": [44.428, 34.461],
+    "severity": "med-high",
+    "source": "drone",
+    "sensorId": "UAS-1",
+    "salute": "S: 3 dismounts w/ long arms; A: stationary in covered position; L: NAI-7 wadi mouth; U: civilian dress, no insignia; T: 04:37Z; E: positioned overlooking MSR PYTHON",
+    "quote": "Three figures with rifles in concealed position covering the road."
+  },
+  {
+    "id": "spot-db-009",
+    "t": 16695,
+    "location": [44.43313, 34.45612],
+    "severity": "med",
+    "source": "human",
+    "salute": "S: 1 vehicle; A: dust trail NW along MSR PYTHON; L: VIL FORK; U: civilian pickup; T: 04:38Z; E: approaching NAI-7",
+    "quote": "Patrol reports civilian pickup heading NW on MSR PYTHON out of VIL FORK."
+  },
+  {
+    "id": "spot-db-010",
+    "t": 21600,
+    "location": [44.382, 34.491],
+    "severity": "low",
+    "source": "drone",
+    "sensorId": "UAS-2",
+    "salute": "S: 0; A: routine ISR overflight; L: NW quadrant; U: N/A; T: 06:00Z; E: nothing of interest",
+    "quote": "Standard pattern, no activity."
+  },
+  {
+    "id": "spot-db-011",
+    "t": 22320,
+    "location": [44.425, 34.483],
+    "severity": "low",
+    "source": "i-ugs",
+    "sensorId": "IUGS-3",
+    "salute": "S: 4 dismounts; A: foot patrol bearing 045; L: IUGS-3 (NAI-12 vicinity); U: civilian dress; T: 06:12Z; E: passing through",
+    "quote": "Group of four moving NE, no visible weapons."
+  },
+  {
+    "id": "spot-db-012",
+    "t": 25200,
+    "location": [44.340, 34.410],
+    "severity": "low",
+    "source": "human",
+    "salute": "S: 2 vehicles; A: SE on minor track; L: SW exit road; U: civilian sedans; T: 07:00Z; E: routine commuter traffic",
+    "quote": "Morning movement out of villages south."
+  },
+  {
+    "id": "spot-db-013",
+    "t": 28800,
+    "location": [44.395, 34.432],
+    "severity": "low",
+    "source": "ugs",
+    "sensorId": "UGS-D",
+    "salute": "S: unknown; A: vehicular pass; L: UGS-D (S corridor); U: unknown; T: 08:00Z; E: seismic trip consistent w/ single light vehicle",
+    "quote": "Single vehicle pass, southbound."
+  },
+  {
+    "id": "spot-db-014",
+    "t": 32400,
+    "location": [44.371, 34.467],
+    "severity": "low",
+    "source": "i-ugs",
+    "sensorId": "IUGS-4",
+    "salute": "S: 0; A: wildlife trigger; L: IUGS-4; U: jackal; T: 09:00Z; E: false-positive on motion",
+    "quote": "Animal trigger, no human activity."
+  },
+  {
+    "id": "spot-db-015",
+    "t": 39600,
+    "location": [44.412, 34.448],
+    "severity": "low",
+    "source": "drone",
+    "sensorId": "UAS-1",
+    "salute": "S: 0; A: post-incident sweep; L: NAI-7 corridor; U: N/A; T: 11:00Z; E: area clear",
+    "quote": "Follow-up sweep after morning ambush indicators — area now empty."
+  },
+  {
+    "id": "spot-db-016",
+    "t": 50400,
+    "location": [44.318, 34.455],
+    "severity": "low",
+    "source": "human",
+    "salute": "S: 3 dismounts; A: gathering firewood; L: W ridge base; U: village locals; T: 14:00Z; E: routine activity",
+    "quote": "Locals collecting brush, observed by patrol."
+  },
+  {
+    "id": "spot-db-017",
+    "t": 57600,
+    "location": [44.408, 34.475],
+    "severity": "low",
+    "source": "rf",
+    "sensorId": "RF-2",
+    "salute": "S: unknown; A: brief VHF chatter 156 MHz; L: RF-2 sector; U: unknown; T: 16:00Z; E: marine band, likely civilian",
+    "quote": "Short voice traffic, not encrypted."
+  },
+  {
+    "id": "spot-db-018",
+    "t": 64800,
+    "location": [44.345, 34.425],
+    "severity": "low",
+    "source": "drone",
+    "sensorId": "UAS-2",
+    "salute": "S: 0; A: routine ISR; L: OBJ FALCON ridge; U: N/A; T: 18:00Z; E: no activity",
+    "quote": "Sunset overflight, all quiet."
+  },
+  {
+    "id": "spot-db-019",
+    "t": 79200,
+    "location": [44.420, 34.456],
+    "severity": "low",
+    "source": "ugs",
+    "sensorId": "UGS-A",
+    "salute": "S: 1 dismount; A: foot movement; L: UGS-A; U: unknown; T: 22:00Z; E: single seismic trip",
+    "quote": "Late-night single trip."
+  },
+  {
+    "id": "spot-db-020",
+    "t": 93600,
+    "location": [44.428, 34.461],
+    "severity": "low",
+    "source": "drone",
+    "sensorId": "UAS-1",
+    "salute": "S: 0; A: night ISR pass; L: NAI-7; U: N/A; T: 02:00Z (D2); E: thermal clear",
+    "quote": "No thermal signatures in NAI-7."
+  },
+  {
+    "id": "spot-db-021",
+    "t": 108720,
+    "location": [44.425, 34.483],
+    "severity": "low",
+    "source": "i-ugs",
+    "sensorId": "IUGS-3",
+    "salute": "S: 5 dismounts; A: foot patrol bearing 045; L: IUGS-3 (NAI-12 vicinity); U: civilian dress; T: 06:12Z (D2); E: passing through",
+    "quote": "Different group, similar bearing, ~24h after the prior pass."
+  },
+  {
+    "id": "spot-db-022",
+    "t": 111600,
+    "location": [44.357, 34.412],
+    "severity": "low",
+    "source": "human",
+    "salute": "S: ~20 head livestock; A: moving E; L: S basin; U: N/A; T: 07:00Z (D2); E: routine herd",
+    "quote": "Sheep being moved to morning grazing."
+  },
+  {
+    "id": "spot-db-023",
+    "t": 115200,
+    "location": [44.398, 34.491],
+    "severity": "low",
+    "source": "ugs",
+    "sensorId": "UGS-E",
+    "salute": "S: unknown; A: vehicle pass; L: UGS-E (N route); U: unknown; T: 08:00Z (D2); E: seismic trip",
+    "quote": "Single vehicle, NB."
+  },
+  {
+    "id": "spot-db-024",
+    "t": 122400,
+    "location": [44.435, 34.453],
+    "severity": "med",
+    "source": "rf",
+    "sensorId": "RF-1",
+    "salute": "S: unknown; A: 1x short burst UHF 412 MHz; L: RF-1; U: unknown; T: 10:00Z (D2); E: matches prior burst pattern",
+    "quote": "Repeat of yesterday's signal profile."
+  },
+  {
+    "id": "spot-db-025",
+    "t": 129600,
+    "location": [44.310, 34.490],
+    "severity": "low",
+    "source": "drone",
+    "sensorId": "UAS-2",
+    "salute": "S: 0; A: routine NW sweep; L: NW corner; U: N/A; T: 12:00Z (D2); E: nothing of note",
+    "quote": "Nothing observed."
+  },
+  {
+    "id": "spot-db-026",
+    "t": 144000,
+    "location": [44.367, 34.439],
+    "severity": "low",
+    "source": "i-ugs",
+    "sensorId": "IUGS-5",
+    "salute": "S: 1 vehicle; A: stopped on track; L: IUGS-5; U: civilian truck; T: 16:00Z (D2); E: occupants out, repairing tire",
+    "quote": "Roadside repair, observed for 18 min then departed."
+  },
+  {
+    "id": "spot-db-027",
+    "t": 158400,
+    "location": [44.418, 34.467],
+    "severity": "low",
+    "source": "ugs",
+    "sensorId": "UGS-B",
+    "salute": "S: 1 dismount; A: foot movement W; L: UGS-B; U: unknown; T: 20:00Z (D2); E: single trip",
+    "quote": "Single late-evening trip."
+  },
+  {
+    "id": "spot-db-028",
+    "t": 172800,
+    "location": [44.345, 34.425],
+    "severity": "low",
+    "source": "drone",
+    "sensorId": "UAS-2",
+    "salute": "S: 0; A: routine ISR; L: OBJ FALCON; U: N/A; T: 00:00Z (D3); E: clear",
+    "quote": "Nothing observed."
+  },
+  {
+    "id": "spot-db-029",
+    "t": 195120,
+    "location": [44.425, 34.483],
+    "severity": "low",
+    "source": "i-ugs",
+    "sensorId": "IUGS-3",
+    "salute": "S: 4 dismounts; A: foot patrol bearing 045; L: IUGS-3 (NAI-12 vicinity); U: civilian dress; T: 06:12Z (D3); E: passing through",
+    "quote": "Pattern continues — same window, same bearing."
+  },
+  {
+    "id": "spot-db-030",
+    "t": 198000,
+    "location": [44.382, 34.421],
+    "severity": "low",
+    "source": "human",
+    "salute": "S: 1 motorcycle; A: SB on minor track; L: S corridor; U: civilian rider; T: 07:00Z (D3); E: routine",
+    "quote": "Single rider, no passengers."
+  },
+  {
+    "id": "spot-db-031",
+    "t": 205200,
+    "location": [44.404, 34.448],
+    "severity": "med",
+    "source": "ugs",
+    "sensorId": "UGS-D",
+    "salute": "S: 3-4 dismounts; A: clustered movement; L: UGS-D; U: unknown; T: 09:00Z (D3); E: multiple seismic+acoustic",
+    "quote": "Group activity at sensor, more bodies than typical."
+  },
+  {
+    "id": "spot-db-032",
+    "t": 216000,
+    "location": [44.41456, 34.48075],
+    "severity": "med",
+    "source": "drone",
+    "sensorId": "UAS-1",
+    "salute": "S: 6 dismounts, 1 light vehicle; A: clustered at compound; L: inferred staging point (loop centroid); U: civilian dress; T: 12:00Z (D3); E: stationary, items being transferred",
+    "quote": "Activity at the inferred staging point — first direct observation."
+  },
+  {
+    "id": "spot-db-033",
+    "t": 226800,
+    "location": [44.392, 34.402],
+    "severity": "low",
+    "source": "i-ugs",
+    "sensorId": "IUGS-2",
+    "salute": "S: 2 dismounts; A: foot movement S; L: IUGS-2; U: civilian dress; T: 15:00Z (D3); E: routine",
+    "quote": "Two locals walking out of basin."
+  },
+  {
+    "id": "spot-db-034",
+    "t": 237600,
+    "location": [44.310, 34.420],
+    "severity": "low",
+    "source": "rf",
+    "sensorId": "RF-2",
+    "salute": "S: unknown; A: VHF voice 154 MHz; L: W edge; U: unknown; T: 18:00Z (D3); E: brief, in clear",
+    "quote": "Marine-band chatter, civilian pattern."
+  },
+  {
+    "id": "spot-db-035",
+    "t": 252000,
+    "location": [44.428, 34.461],
+    "severity": "low",
+    "source": "drone",
+    "sensorId": "UAS-1",
+    "salute": "S: 0; A: night thermal sweep NAI-7; L: NAI-7; U: N/A; T: 22:00Z (D3); E: clear",
+    "quote": "No thermal returns."
+  },
+  {
+    "id": "spot-db-036",
+    "t": 270000,
+    "location": [44.358, 34.488],
+    "severity": "low",
+    "source": "ugs",
+    "sensorId": "UGS-F",
+    "salute": "S: unknown; A: vehicle pass; L: UGS-F (N edge); U: unknown; T: 03:00Z (D4); E: seismic trip",
+    "quote": "Single vehicle, late hour."
+  },
+  {
+    "id": "spot-db-037",
+    "t": 281520,
+    "location": [44.425, 34.483],
+    "severity": "low",
+    "source": "i-ugs",
+    "sensorId": "IUGS-3",
+    "salute": "S: 4 dismounts; A: foot patrol bearing 045; L: IUGS-3 (NAI-12 vicinity); U: civilian dress; T: 06:12Z (D4); E: passing through",
+    "quote": "Fourth consecutive day, same pattern."
+  },
+  {
+    "id": "spot-db-038",
+    "t": 288000,
+    "location": [44.345, 34.460],
+    "severity": "low",
+    "source": "human",
+    "salute": "S: ~15 head livestock; A: grazing; L: W slopes; U: N/A; T: 08:00Z (D4); E: routine",
+    "quote": "Goat herd, one shepherd."
+  },
+  {
+    "id": "spot-db-039",
+    "t": 295200,
+    "location": [44.440, 34.495],
+    "severity": "low",
+    "source": "drone",
+    "sensorId": "UAS-2",
+    "salute": "S: 0; A: routine ISR; L: NE corner; U: N/A; T: 10:00Z (D4); E: clear",
+    "quote": "Nothing observed."
+  },
+  {
+    "id": "spot-db-040",
+    "t": 306000,
+    "location": [44.415, 34.444],
+    "severity": "med",
+    "source": "ugs",
+    "sensorId": "UGS-A",
+    "salute": "S: 2-3 dismounts; A: foot movement N; L: UGS-A; U: unknown; T: 13:00Z (D4); E: seismic+acoustic, daylight uncommon",
+    "quote": "Daylight movement here is unusual."
+  },
+  {
+    "id": "spot-db-041",
+    "t": 313200,
+    "location": [44.388, 34.471],
+    "severity": "low",
+    "source": "human",
+    "salute": "S: 5 dismounts; A: surveying field; L: N basin; U: civilian dress, w/ tools; T: 15:00Z (D4); E: looks like agricultural work",
+    "quote": "Patrol observed farmers in field."
+  },
+  {
+    "id": "spot-db-042",
+    "t": 324000,
+    "location": [44.434, 34.451],
+    "severity": "med",
+    "source": "rf",
+    "sensorId": "RF-1",
+    "salute": "S: unknown; A: 2x burst UHF 412 MHz; L: RF-1; U: unknown; T: 18:00Z (D4); E: same encrypted profile",
+    "quote": "Same burst signature, third occurrence this week."
+  },
+  {
+    "id": "spot-db-043",
+    "t": 338400,
+    "location": [44.368, 34.428],
+    "severity": "low",
+    "source": "i-ugs",
+    "sensorId": "IUGS-2",
+    "salute": "S: 1 dismount; A: foot movement E; L: IUGS-2; U: civilian dress; T: 22:00Z (D4); E: night activity",
+    "quote": "Single person walking, low confidence on intent."
+  },
+  {
+    "id": "spot-db-044",
+    "t": 352800,
+    "location": [44.428, 34.461],
+    "severity": "med-high",
+    "source": "drone",
+    "sensorId": "UAS-1",
+    "salute": "S: 2 dismounts w/ long arms; A: stationary in covered position; L: NAI-7; U: civilian dress; T: 02:00Z (D5); E: same overwatch position as D1 incident",
+    "quote": "Two armed figures back at the same NAI-7 covered position."
+  },
+  {
+    "id": "spot-db-045",
+    "t": 360000,
+    "location": [44.395, 34.432],
+    "severity": "low",
+    "source": "ugs",
+    "sensorId": "UGS-D",
+    "salute": "S: unknown; A: vehicle pass; L: UGS-D; U: unknown; T: 04:00Z (D5); E: seismic trip",
+    "quote": "Single SB pass."
+  },
+  {
+    "id": "spot-db-046",
+    "t": 367920,
+    "location": [44.425, 34.483],
+    "severity": "low",
+    "source": "i-ugs",
+    "sensorId": "IUGS-3",
+    "salute": "S: 4 dismounts; A: foot patrol bearing 045; L: IUGS-3 (NAI-12 vicinity); U: civilian dress; T: 06:12Z (D5); E: passing through",
+    "quote": "Fifth-day repeat — pattern locked."
+  },
+  {
+    "id": "spot-db-047",
+    "t": 378000,
+    "location": [44.310, 34.460],
+    "severity": "low",
+    "source": "human",
+    "salute": "S: 2 vehicles; A: parked at junction; L: W exit; U: civilian sedans; T: 09:00Z (D5); E: drivers chatting",
+    "quote": "Routine roadside meet."
+  },
+  {
+    "id": "spot-db-048",
+    "t": 388800,
+    "location": [44.41456, 34.48075],
+    "severity": "med",
+    "source": "drone",
+    "sensorId": "UAS-1",
+    "salute": "S: 4 dismounts, 1 vehicle; A: loading vehicle; L: inferred staging compound; U: civilian dress; T: 12:00Z (D5); E: outbound prep",
+    "quote": "Activity again at staging point — vehicle being loaded."
+  },
+  {
+    "id": "spot-db-049",
+    "t": 399600,
+    "location": [44.376, 34.413],
+    "severity": "low",
+    "source": "ugs",
+    "sensorId": "UGS-D",
+    "salute": "S: 1-2 dismounts; A: foot movement N; L: UGS-D vicinity; U: unknown; T: 15:00Z (D5); E: seismic trip",
+    "quote": "Two-person foot movement, daylight."
+  },
+  {
+    "id": "spot-db-050",
+    "t": 410400,
+    "location": [44.420, 34.473],
+    "severity": "low",
+    "source": "rf",
+    "sensorId": "RF-2",
+    "salute": "S: unknown; A: brief data burst 433 MHz; L: RF-2 sector; U: unknown; T: 18:00Z (D5); E: short, possibly telemetry",
+    "quote": "Short non-voice burst, unclassified."
+  }
+]

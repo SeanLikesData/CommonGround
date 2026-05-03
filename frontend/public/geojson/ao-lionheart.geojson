@@ -1,0 +1,288 @@
+{
+  "type": "FeatureCollection",
+  "metadata": {
+    "name": "AO LIONHEART — synthetic training scenario",
+    "disclaimer": "All tactical graphics, unit positions, NAIs, sensor placements, and labels are FICTIONAL. Geography (terrain, drainage envelope, road corridor, settlement nodes) is real Hamrin range, Iraq. Do not interpret as actual intelligence.",
+    "anchor": "Hamrin range, Diyala / Salah ad-Din border, northern Iraq",
+    "bbox_approx": [44.30, 34.40, 44.45, 34.50],
+    "crs": "EPSG:4326",
+    "sources": {
+      "msr_python": "OSM unclassified road traversing AO SE→NW",
+      "vil_fork": "OSM village node عرب خلف نسنيس on the OSM road",
+      "staging_compound": "OSM village node عرب خلف الحسون in NE AO",
+      "wadi_hamrin": "Drainage traced from MapTiler satellite (no OSM coverage)"
+    }
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "feature_type": "ao_boundary",
+        "label": "AO LIONHEART",
+        "style_class": "synthetic_overlay"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [44.300, 34.400],
+          [44.450, 34.400],
+          [44.450, 34.500],
+          [44.300, 34.500],
+          [44.300, 34.400]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "feature_type": "objective",
+        "label": "OBJ FALCON",
+        "note": "fictional ridge objective on rugged W terrain; DEM-snap if higher-fidelity terrain becomes available",
+        "style_class": "synthetic_overlay"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [44.345, 34.425]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "feature_type": "msr",
+        "label": "MSR PYTHON",
+        "note": "snapped to OSM unclassified road traversing AO SE→NW",
+        "style_class": "real_geography"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [44.4452, 34.4196],
+          [44.4451, 34.4196],
+          [44.4431, 34.4209],
+          [44.4369, 34.4374],
+          [44.4302, 34.4551],
+          [44.4263, 34.4655],
+          [44.4221, 34.4759],
+          [44.4180, 34.4870],
+          [44.4145, 34.4960]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "feature_type": "village",
+        "label": "VIL FORK",
+        "note": "snapped to OSM village node on MSR PYTHON (real anchor: عرب خلف نسنيس)",
+        "style_class": "real_geography"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [44.43313, 34.45612]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "feature_type": "wadi",
+        "label": "Wadi Hamrin (scenario)",
+        "note": "traced from satellite drainage in S/SW AO, sinuous SW→NE, mouth opens onto MSR at NAI-7",
+        "style_class": "real_geography"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [44.330, 34.412],
+          [44.348, 34.418],
+          [44.365, 34.428],
+          [44.378, 34.435],
+          [44.390, 34.440],
+          [44.402, 34.448],
+          [44.413, 34.452],
+          [44.420, 34.456],
+          [44.428, 34.461]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "feature_type": "nai",
+        "label": "NAI-7",
+        "note": "wadi mouth where covered approach meets MSR — ambush trigger zone",
+        "style_class": "synthetic_overlay"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [44.420, 34.456],
+          [44.435, 34.456],
+          [44.435, 34.466],
+          [44.420, 34.466],
+          [44.420, 34.456]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "feature_type": "nai",
+        "label": "NAI-12",
+        "note": "high ground east of OBJ FALCON; overwatch ridge over staging compound vicinity",
+        "style_class": "synthetic_overlay"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [44.420, 34.480],
+          [44.435, 34.480],
+          [44.435, 34.490],
+          [44.420, 34.490],
+          [44.420, 34.480]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "feature_type": "sensor",
+        "sensor_type": "ugs_seismic_acoustic",
+        "label": "UGS-A",
+        "note": "south mouth of Wadi Hamrin, on chokepoint where wadi meets MSR",
+        "style_class": "synthetic_overlay"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [44.420, 34.456]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "feature_type": "sensor",
+        "sensor_type": "ugs_seismic_acoustic",
+        "label": "UGS-B",
+        "note": "upstream of UGS-A in wadi; covers covered approach from SW",
+        "style_class": "synthetic_overlay"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [44.413, 34.452]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "feature_type": "sensor",
+        "sensor_type": "rf_edge",
+        "label": "RF-1",
+        "note": "edge RF sensor on overwatch hill near VIL FORK; passive monitoring of adversary command bands",
+        "style_class": "synthetic_overlay"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [44.438, 34.452]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "feature_type": "sensor",
+        "sensor_type": "i_ugs",
+        "label": "IUGS-1",
+        "note": "I-UGS on inferred patrol loop, west leg",
+        "style_class": "synthetic_overlay"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [44.405, 34.487]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "feature_type": "sensor",
+        "sensor_type": "i_ugs",
+        "label": "IUGS-2",
+        "note": "I-UGS on inferred patrol loop, north leg",
+        "style_class": "synthetic_overlay"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [44.420, 34.493]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "feature_type": "sensor",
+        "sensor_type": "i_ugs",
+        "label": "IUGS-3",
+        "note": "I-UGS on inferred patrol loop, NAI-12 vicinity (Scenario 2 primary reporter)",
+        "style_class": "synthetic_overlay"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [44.425, 34.483]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "feature_type": "drone_orbit",
+        "label": "UAS-1 orbit",
+        "note": "operator+drone orbit centered on NAI-7 after cueing (~500 m radius, octagonal approximation)",
+        "style_class": "synthetic_overlay"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [44.4334, 34.4610],
+          [44.4320, 34.4642],
+          [44.4280, 34.4655],
+          [44.4240, 34.4642],
+          [44.4226, 34.4610],
+          [44.4240, 34.4578],
+          [44.4280, 34.4565],
+          [44.4320, 34.4578],
+          [44.4334, 34.4610]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "feature_type": "patrol_loop",
+        "label": "Inferred patrol loop",
+        "note": "Scenario 2 — agent-derived recurring vehicle pattern; encloses suspected staging compound",
+        "style_class": "synthetic_overlay"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [44.4276, 34.487],
+          [44.4250, 34.4915],
+          [44.4150, 34.4940],
+          [44.4040, 34.4910],
+          [44.3995, 34.4830],
+          [44.4060, 34.4750],
+          [44.4180, 34.4742],
+          [44.4276, 34.487]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "feature_type": "suspected_site",
+        "label": "Suspected staging compound (POL inference)",
+        "note": "Scenario 2 — agent-derived patrol centroid; snapped to OSM village node عرب خلف الحسون",
+        "style_class": "real_geography"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [44.41456, 34.48075]
+      }
+    }
+  ]
+}

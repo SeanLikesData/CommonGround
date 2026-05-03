@@ -1,0 +1,32 @@
+[
+  {
+    "id": "alert-db-001",
+    "t": 16710,
+    "location": [44.428, 34.461],
+    "severity": "high",
+    "summary": "Likely ambush element forming at NAI-7",
+    "contributingSpotIds": ["spot-db-005", "spot-db-006", "spot-db-007", "spot-db-008"],
+    "citedMemoryIds": ["mem-db-001", "mem-db-002"],
+    "reasoning": "UGS-A and UGS-B trips with consistent SW→NE bearing up Wadi Hamrin toward NAI-7, followed by RF burst comms matching pre-staging profile from RF-1 overwatch, then drone confirmation of three armed dismounts in covered position over MSR PYTHON. Pattern matches stored prior for Hamrin terrain pinch ambushes."
+  },
+  {
+    "id": "alert-db-002",
+    "t": 16800,
+    "location": [44.428, 34.461],
+    "severity": "high",
+    "summary": "Ambush trigger imminent — vehicle approaching kill zone",
+    "contributingSpotIds": ["spot-db-008", "spot-db-009"],
+    "citedMemoryIds": ["mem-db-001", "mem-db-002"],
+    "reasoning": "Armed element confirmed at NAI-7; civilian-dress vehicle now approaching from VIL FORK along MSR PYTHON. Track convergence consistent with VBIED or trigger vehicle for static ambush."
+  },
+  {
+    "id": "alert-db-003",
+    "t": 195200,
+    "location": [44.41456, 34.48075],
+    "severity": "med",
+    "summary": "Probable patrol loop detected — staging compound inferred",
+    "contributingSpotIds": ["spot-db-011", "spot-db-021", "spot-db-029"],
+    "citedMemoryIds": ["mem-db-003"],
+    "reasoning": "Three consecutive daily passes through IUGS-3 in NAI-12 vicinity, same bearing, same time window, with rotating personnel. Geometry consistent with a patrol cycle originating from a fixed staging point at the loop centroid."
+  }
+]
