@@ -1,35 +1,36 @@
 import { useEffect } from "react";
-import { TapeSource } from "./eventSource";
+import { fetchAlerts, fetchMemories, fetchSpotReports } from "./spotReports";
 import { useMapStore } from "./store";
 
-const LIVE_SEED_TAPES = ["/tapes/wadi-hamrin.jsonl", "/tapes/patrol-hvs.jsonl"];
-
-// Pulls every seeded tape and dumps its SPOTs/alerts/memories into the store as
-// the AO's current state. Stand-in for a real /spots feed off Mongo.
+// Pulls all spots/alerts/memories from the JSON store (stand-in for Mongo)
+// and dumps them into the store as the AO's current state.
 export function useLiveSeed() {
   useEffect(() => {
     let cancelled = false;
 
-    Promise.all(LIVE_SEED_TAPES.map((url) => new TapeSource(url).load()))
-      .then((tapes) => {
+    Promise.all([fetchSpotReports(), fetchAlerts(), fetchMemories()])
+      .then(([spots, alerts, memories]) => {
         if (cancelled) return;
-        const { addSpot, addAlert, addMemory, events, alerts, memory } =
-          useMapStore.getState();
-        const seenSpots = new Set(events.map((e) => e.id));
-        const seenAlerts = new Set(alerts.map((a) => a.id));
-        const seenMems = new Set(memory.map((m) => m.id));
-        for (const lines of tapes) {
-          for (const line of lines) {
-            if (line.kind === "spot" && !seenSpots.has(line.payload.id)) {
-              seenSpots.add(line.payload.id);
-              addSpot(line.payload);
-            } else if (line.kind === "alert" && !seenAlerts.has(line.payload.id)) {
-              seenAlerts.add(line.payload.id);
-              addAlert(line.payload);
-            } else if (line.kind === "memory" && !seenMems.has(line.payload.id)) {
-              seenMems.add(line.payload.id);
-              addMemory(line.payload);
-            }
+        const state = useMapStore.getState();
+        const seenSpots = new Set(state.events.map((e) => e.id));
+        const seenAlerts = new Set(state.alerts.map((a) => a.id));
+        const seenMems = new Set(state.memory.map((m) => m.id));
+        for (const s of spots) {
+          if (!seenSpots.has(s.id)) {
+            seenSpots.add(s.id);
+            state.addSpot(s);
+          }
+        }
+        for (const a of alerts) {
+          if (!seenAlerts.has(a.id)) {
+            seenAlerts.add(a.id);
+            state.addAlert(a);
+          }
+        }
+        for (const m of memories) {
+          if (!seenMems.has(m.id)) {
+            seenMems.add(m.id);
+            state.addMemory(m);
           }
         }
       })

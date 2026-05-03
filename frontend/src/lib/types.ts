@@ -35,11 +35,6 @@ export interface MemoryEntry {
   source: "seed" | "analyst";
 }
 
-export type TapeLine =
-  | { t: number; kind: "spot"; payload: SpotEvent }
-  | { t: number; kind: "alert"; payload: AlertEvent }
-  | { t: number; kind: "memory"; payload: MemoryEntry };
-
 export type LayerId =
   | "sensors"
   | "alerts"

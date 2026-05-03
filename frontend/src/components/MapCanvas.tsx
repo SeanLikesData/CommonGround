@@ -11,7 +11,7 @@ import {
   satelliteStyleUrl,
   terrainSource,
 } from "@/lib/mapStyle";
-import { useMapStore } from "@/lib/store";
+import { useMapStore, type SpotDisplayMode } from "@/lib/store";
 import { colors, severityColor, type Severity } from "@/lib/symbology";
 import { setMapInstance } from "@/lib/mapInstance";
 import type { AlertEvent, SpotEvent } from "@/lib/types";
@@ -29,21 +29,115 @@ function maxSeverity(a: Severity, b: Severity): Severity {
   return SEVERITY_RANK[a] >= SEVERITY_RANK[b] ? a : b;
 }
 
-function spotsToFeatureCollection(spots: SpotEvent[], sensorLabels: Set<string>) {
+interface SensorIndex {
+  labels: Set<string>;
+  coords: Map<string, [number, number]>;
+  isTrailCam: Set<string>;
+}
+
+interface HotSensor {
+  severity: Severity;
+  count: number;
+}
+
+interface DisplayState {
+  spots: GeoJSON.FeatureCollection;
+  leaders: GeoJSON.FeatureCollection;
+  hot: Map<string, HotSensor>;
+}
+
+// Geographic offset used for the lollipop fan. ~70m at this latitude — large
+// enough to clear the sensor ring at demo zoom, small enough to read as
+// "attached to" the sensor.
+const FAN_OFFSET_DEG = 0.0007;
+const FAN_STEP_DEG = 28;
+
+function fanOffset(
+  sensorCoord: [number, number],
+  index: number,
+  total: number,
+): [number, number] {
+  const stepRad = (FAN_STEP_DEG * Math.PI) / 180;
+  const baseAngle = Math.PI / 2; // north
+  const a = baseAngle + (index - (total - 1) / 2) * stepRad;
+  const latCorrection = Math.cos((sensorCoord[1] * Math.PI) / 180) || 1;
+  return [
+    sensorCoord[0] + (Math.cos(a) * FAN_OFFSET_DEG) / latCorrection,
+    sensorCoord[1] + Math.sin(a) * FAN_OFFSET_DEG,
+  ];
+}
+
+function spotFeature(s: SpotEvent, coord: [number, number]): GeoJSON.Feature {
   return {
-    type: "FeatureCollection" as const,
-    features: spots
-      .filter((s) => !s.sensorId || !sensorLabels.has(s.sensorId))
-      .map((s) => ({
-        type: "Feature" as const,
-        properties: {
-          id: s.id,
-          severity: s.severity,
-          source: s.source,
-          salute: s.salute,
-        },
-        geometry: { type: "Point" as const, coordinates: s.location },
-      })),
+    type: "Feature",
+    properties: {
+      id: s.id,
+      severity: s.severity,
+      source: s.source,
+      salute: s.salute,
+    },
+    geometry: { type: "Point", coordinates: coord },
+  };
+}
+
+function computeDisplay(
+  events: SpotEvent[],
+  sensorIndex: SensorIndex,
+  mode: SpotDisplayMode,
+): DisplayState {
+  const bySensor = new Map<string, SpotEvent[]>();
+  const freeStanding: SpotEvent[] = [];
+  for (const e of events) {
+    if (e.sensorId && sensorIndex.labels.has(e.sensorId)) {
+      const arr = bySensor.get(e.sensorId);
+      if (arr) arr.push(e);
+      else bySensor.set(e.sensorId, [e]);
+    } else {
+      freeStanding.push(e);
+    }
+  }
+
+  const hot = new Map<string, HotSensor>();
+  for (const [label, list] of bySensor) {
+    let sev = list[0].severity;
+    for (const s of list) sev = maxSeverity(sev, s.severity);
+    hot.set(label, { severity: sev, count: list.length });
+  }
+
+  const spotFeatures: GeoJSON.Feature[] = freeStanding.map((s) =>
+    spotFeature(s, s.location),
+  );
+  const leaderFeatures: GeoJSON.Feature[] = [];
+
+  if (mode === "offset") {
+    // Sensor-attached spots fan out from the sensor with a leader line.
+    for (const [label, list] of bySensor) {
+      const coord = sensorIndex.coords.get(label);
+      if (!coord) continue;
+      const sorted = [...list].sort((a, b) => a.t - b.t);
+      sorted.forEach((s, i) => {
+        const off = fanOffset(coord, i, sorted.length);
+        spotFeatures.push(spotFeature(s, off));
+        leaderFeatures.push({
+          type: "Feature",
+          properties: {
+            sensorId: label,
+            spotId: s.id,
+            severity: s.severity,
+          },
+          geometry: { type: "LineString", coordinates: [coord, off] },
+        });
+      });
+    }
+  }
+  // "merge" and "cluster" leave sensor-attached spots out of the spots layer:
+  // the sensor itself carries the signal (severity ring + pulse, plus a count
+  // badge in cluster mode).
+
+  return {
+    spots: { type: "FeatureCollection", features: spotFeatures },
+    leaders: { type: "FeatureCollection", features: leaderFeatures },
+    hot,
   };
 }
 
@@ -74,23 +168,19 @@ export default function MapCanvas() {
   const setSelection = useMapStore((s) => s.setSelection);
   const visibleLayers = useMapStore((s) => s.visibleLayers);
   const chatOpen = useMapStore((s) => s.chatOpen);
+  const spotDisplayMode = useMapStore((s) => s.spotDisplayMode);
   const markersRef = useRef<Map<string, maplibregl.Marker>>(new Map());
   const sensorPulseRef = useRef<Map<string, maplibregl.Marker>>(new Map());
-  const [sensorIndex, setSensorIndex] = useState<{
-    labels: Set<string>;
-    coords: Map<string, [number, number]>;
-    isTrailCam: Set<string>;
-  }>({ labels: new Set(), coords: new Map(), isTrailCam: new Set() });
+  const [sensorIndex, setSensorIndex] = useState<SensorIndex>({
+    labels: new Set(),
+    coords: new Map(),
+    isTrailCam: new Set(),
+  });
 
-  const hotSensors = useMemo(() => {
-    const m = new Map<string, Severity>();
-    for (const e of events) {
-      if (!e.sensorId || !sensorIndex.labels.has(e.sensorId)) continue;
-      const cur = m.get(e.sensorId);
-      m.set(e.sensorId, cur ? maxSeverity(cur, e.severity) : e.severity);
-    }
-    return m;
-  }, [events, sensorIndex]);
+  const display = useMemo(
+    () => computeDisplay(events, sensorIndex, spotDisplayMode),
+    [events, sensorIndex, spotDisplayMode],
+  );
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
@@ -325,13 +415,8 @@ export default function MapCanvas() {
           },
         });
 
-        // Dynamic SPOT layer
-        map.addSource("spots", {
-          type: "geojson",
-          data: { type: "FeatureCollection", features: [] },
-        });
-
-        // SPOT halo: severity-colored disc behind the glyph.
+        // SPOT halo: severity-colored disc behind the glyph; reused by the
+        // lollipop leader lines that connect a sensor to its offset spots.
         const severityMatch: maplibregl.ExpressionSpecification = [
           "match",
           ["get", "severity"],
@@ -345,6 +430,30 @@ export default function MapCanvas() {
           colors.severity.high,
           "#94a3b8",
         ];
+
+        // Lollipop leaders (sensor → offset spot). Empty unless display mode
+        // is "offset"; managed by an effect below.
+        map.addSource("leaders", {
+          type: "geojson",
+          data: { type: "FeatureCollection", features: [] },
+        });
+        map.addLayer({
+          id: "leaders-layer",
+          type: "line",
+          source: "leaders",
+          paint: {
+            "line-color": severityMatch,
+            "line-width": 1.2,
+            "line-opacity": 0.7,
+            "line-dasharray": [2, 2],
+          },
+        });
+
+        // Dynamic SPOT layer
+        map.addSource("spots", {
+          type: "geojson",
+          data: { type: "FeatureCollection", features: [] },
+        });
         map.addLayer({
           id: "spots-halo",
           type: "circle",
@@ -445,36 +554,42 @@ export default function MapCanvas() {
     };
   }, [setSelection]);
 
-  // Push events into the spots source whenever they change. Sensor-attached
-  // spots are filtered out — the sensor itself lights up instead.
+  // Push the computed spots + leaders into their sources whenever the
+  // display state changes (events, sensor index, or display mode).
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !styleReady) return;
-    const src = map.getSource("spots");
-    if (src && "setData" in src) {
-      (src as maplibregl.GeoJSONSource).setData(
-        spotsToFeatureCollection(events, sensorIndex.labels),
-      );
+    const spotsSrc = map.getSource("spots");
+    if (spotsSrc && "setData" in spotsSrc) {
+      (spotsSrc as maplibregl.GeoJSONSource).setData(display.spots);
     }
-  }, [events, sensorIndex, styleReady]);
+    const leadersSrc = map.getSource("leaders");
+    if (leadersSrc && "setData" in leadersSrc) {
+      (leadersSrc as maplibregl.GeoJSONSource).setData(display.leaders);
+    }
+  }, [display, styleReady]);
 
-  // Upgrade hot sensors: severity-colored stroke, thicker ring, animated
-  // pulse overlay. Cool back to base when no spots reference the sensor.
+  // Sensor visual state. Branches on the display mode:
+  //   merge   → severity stroke + thicker ring + pulse marker
+  //   cluster → same as merge plus a count badge on the marker
+  //   offset  → no upgrade; sensor stays muted, spots fan out via leaders
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !styleReady) return;
 
     const sensorsVisible = visibleLayers.has("sensors");
+    const showUpgrade = spotDisplayMode !== "offset";
 
     const buildStrokeColor = (
       base: string,
       filterFn: (label: string) => boolean,
     ): string | maplibregl.ExpressionSpecification => {
-      const entries = Array.from(hotSensors.entries()).filter(([l]) => filterFn(l));
+      if (!showUpgrade) return base;
+      const entries = Array.from(display.hot.entries()).filter(([l]) => filterFn(l));
       if (entries.length === 0) return base;
       const expr: unknown[] = ["case"];
-      for (const [label, sev] of entries) {
-        expr.push(["==", ["get", "label"], label], severityColor(sev));
+      for (const [label, info] of entries) {
+        expr.push(["==", ["get", "label"], label], severityColor(info.severity));
       }
       expr.push(base);
       return expr as maplibregl.ExpressionSpecification;
@@ -484,7 +599,8 @@ export default function MapCanvas() {
       base: number,
       filterFn: (label: string) => boolean,
     ): number | maplibregl.ExpressionSpecification => {
-      const labels = Array.from(hotSensors.keys()).filter(filterFn);
+      if (!showUpgrade) return base;
+      const labels = Array.from(display.hot.keys()).filter(filterFn);
       if (labels.length === 0) return base;
       return [
         "case",
@@ -519,21 +635,46 @@ export default function MapCanvas() {
       );
     }
 
+    const wantMarkers = sensorsVisible && spotDisplayMode !== "offset";
+    const expectedClass =
+      spotDisplayMode === "cluster" ? "sensor-cluster-marker" : "sensor-hot-marker";
+
     const seen = new Set<string>();
-    if (sensorsVisible) {
-      for (const [label, sev] of hotSensors) {
+    if (wantMarkers) {
+      for (const [label, info] of display.hot) {
         const coord = sensorIndex.coords.get(label);
         if (!coord) continue;
         seen.add(label);
+        const sevColor = severityColor(info.severity);
         const existing = sensorPulseRef.current.get(label);
+
         if (existing) {
           const el = existing.getElement();
-          el.style.setProperty("--alert-color", severityColor(sev));
-          continue;
+          if (el.classList.contains(expectedClass)) {
+            el.style.setProperty("--alert-color", sevColor);
+            if (spotDisplayMode === "cluster") {
+              const badge = el.querySelector(".sensor-cluster-marker__count");
+              if (badge) badge.textContent = String(info.count);
+            }
+            continue;
+          }
+          existing.remove();
+          sensorPulseRef.current.delete(label);
         }
+
         const el = document.createElement("div");
-        el.className = "sensor-hot-marker";
-        el.style.setProperty("--alert-color", severityColor(sev));
+        el.style.setProperty("--alert-color", sevColor);
+        if (spotDisplayMode === "cluster") {
+          el.className = "sensor-cluster-marker";
+          const pulse = document.createElement("span");
+          pulse.className = "sensor-cluster-marker__pulse";
+          const badge = document.createElement("span");
+          badge.className = "sensor-cluster-marker__count";
+          badge.textContent = String(info.count);
+          el.append(pulse, badge);
+        } else {
+          el.className = "sensor-hot-marker";
+        }
         const marker = new maplibregl.Marker({ element: el, anchor: "center" })
           .setLngLat(coord)
           .addTo(map);
@@ -546,7 +687,7 @@ export default function MapCanvas() {
         sensorPulseRef.current.delete(label);
       }
     }
-  }, [hotSensors, sensorIndex, visibleLayers, styleReady]);
+  }, [display, sensorIndex, visibleLayers, styleReady, spotDisplayMode]);
 
   // Update connection lines whenever alerts or events change.
   useEffect(() => {
@@ -614,6 +755,7 @@ export default function MapCanvas() {
     setVis("drone-orbit", visibleLayers.has("drone-orbit"));
     setVis("spots-layer", visibleLayers.has("spots"));
     setVis("spots-halo", visibleLayers.has("spots"));
+    setVis("leaders-layer", visibleLayers.has("spots"));
     setVis("connections-layer", visibleLayers.has("alerts"));
     setVis("patrol-loop", visibleLayers.has("inferred"));
   }, [visibleLayers, styleReady]);

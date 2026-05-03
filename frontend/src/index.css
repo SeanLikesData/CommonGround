@@ -83,3 +83,36 @@ body {
   border: 2px solid var(--alert-color, #ef4444);
   animation: sensor-hot-pulse 1.8s ease-out infinite;
 }
+
+.sensor-cluster-marker {
+  position: relative;
+  width: 26px;
+  height: 26px;
+  pointer-events: none;
+}
+
+.sensor-cluster-marker__pulse {
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  border: 2px solid var(--alert-color, #ef4444);
+  animation: sensor-hot-pulse 1.8s ease-out infinite;
+}
+
+.sensor-cluster-marker__count {
+  position: absolute;
+  top: -8px;
+  right: -10px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9999px;
+  background: var(--alert-color, #ef4444);
+  color: #0f172a;
+  font: 600 10px ui-sans-serif, system-ui, sans-serif;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid #0f172a;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.6);
+}

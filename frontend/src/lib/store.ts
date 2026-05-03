@@ -9,6 +9,7 @@ import type {
 
 export type View = "live" | "graph" | "memory";
 export type LeftPanelId = "alerts" | "layers" | "settings";
+export type SpotDisplayMode = "merge" | "offset" | "cluster";
 
 interface MapState {
   view: View;
@@ -22,6 +23,7 @@ interface MapState {
   leftPanel: LeftPanelId | null;
   autoFlyToAlerts: boolean;
   showWatermark: boolean;
+  spotDisplayMode: SpotDisplayMode;
 
   setView: (v: View) => void;
   addSpot: (e: SpotEvent) => void;
@@ -35,6 +37,7 @@ interface MapState {
   closeLeftPanel: () => void;
   setAutoFlyToAlerts: (v: boolean) => void;
   setShowWatermark: (v: boolean) => void;
+  setSpotDisplayMode: (m: SpotDisplayMode) => void;
 }
 
 const ALL_LAYERS: LayerId[] = [
@@ -59,6 +62,7 @@ export const useMapStore = create<MapState>((set) => ({
   leftPanel: "alerts",
   autoFlyToAlerts: true,
   showWatermark: true,
+  spotDisplayMode: "merge",
 
   setView: (v) => set({ view: v }),
   addSpot: (e) => set((st) => ({ events: [...st.events, e] })),
@@ -79,4 +83,5 @@ export const useMapStore = create<MapState>((set) => ({
   closeLeftPanel: () => set({ leftPanel: null }),
   setAutoFlyToAlerts: (v) => set({ autoFlyToAlerts: v }),
   setShowWatermark: (v) => set({ showWatermark: v }),
+  setSpotDisplayMode: (m) => set({ spotDisplayMode: m }),
 }));

@@ -5,7 +5,29 @@ import {
   MAP_PITCH,
   MAP_ZOOM,
 } from "@/lib/mapStyle";
-import { useMapStore } from "@/lib/store";
+import { useMapStore, type SpotDisplayMode } from "@/lib/store";
+
+const SPOT_MODES: {
+  id: SpotDisplayMode;
+  label: string;
+  hint: string;
+}[] = [
+  {
+    id: "merge",
+    label: "Merge into sensor",
+    hint: "Sensor itself lights up (severity ring + pulse). Cleanest at a glance.",
+  },
+  {
+    id: "offset",
+    label: "Lollipop offset",
+    hint: "Sensor stays muted; spots fan out with leader lines. Good for tracking individual reports.",
+  },
+  {
+    id: "cluster",
+    label: "Cluster on collision",
+    hint: "Sensor pulses with a count badge. Best when one sensor sees many things.",
+  },
+];
 
 function Toggle({
   on,
@@ -57,6 +79,8 @@ export default function SettingsPanel() {
   const setAutoFly = useMapStore((s) => s.setAutoFlyToAlerts);
   const showWatermark = useMapStore((s) => s.showWatermark);
   const setShowWatermark = useMapStore((s) => s.setShowWatermark);
+  const spotMode = useMapStore((s) => s.spotDisplayMode);
+  const setSpotMode = useMapStore((s) => s.setSpotDisplayMode);
 
   const resetView = () => {
     const map = getMapInstance();
@@ -72,6 +96,41 @@ export default function SettingsPanel() {
 
   return (
     <div className="flex flex-col p-2">
+      <SectionHeader>SPOT display</SectionHeader>
+      <div className="flex flex-col gap-1 px-1">
+        {SPOT_MODES.map((m) => {
+          const active = spotMode === m.id;
+          return (
+            <button
+              key={m.id}
+              onClick={() => setSpotMode(m.id)}
+              aria-pressed={active}
+              className={`flex items-start gap-2 rounded border px-2 py-2 text-left transition-colors ${
+                active
+                  ? "border-cyan-400/50 bg-cyan-500/10"
+                  : "border-zinc-800 bg-zinc-900/40 hover:border-zinc-700 hover:bg-zinc-800/60"
+              }`}
+            >
+              <span
+                className={`mt-0.5 inline-flex h-3.5 w-3.5 flex-none items-center justify-center rounded-full border ${
+                  active ? "border-cyan-300" : "border-zinc-600"
+                }`}
+              >
+                {active && (
+                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-cyan-300" />
+                )}
+              </span>
+              <span className="flex flex-col">
+                <span className="text-xs text-zinc-100">{m.label}</span>
+                <span className="text-[10px] leading-snug text-zinc-500">
+                  {m.hint}
+                </span>
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
       <SectionHeader>Map behavior</SectionHeader>
       <Toggle
         on={autoFly}
