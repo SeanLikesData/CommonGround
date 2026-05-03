@@ -4,38 +4,7 @@ import { reporterMeta } from "@/lib/reporters";
 import { getMapInstance } from "@/lib/mapInstance";
 import { formatDTG } from "@/lib/time";
 import type { SpotEvent } from "@/lib/types";
-
-const SALUTE_LABELS: Record<string, string> = {
-  S: "Size",
-  A: "Activity",
-  L: "Location",
-  U: "Unit",
-  T: "Time",
-  E: "Equipment",
-};
-
-interface SaluteField {
-  key: string;
-  label: string;
-  value: string;
-}
-
-// Parse the seed's `;`-delimited "S: …; A: …" form. Returns null if it doesn't
-// look like SALUTE so the caller can fall back to rendering the raw string.
-function parseSalute(raw: string): SaluteField[] | null {
-  const parts = raw.split(/;\s*/).map((p) => p.trim()).filter(Boolean);
-  if (parts.length < 2) return null;
-  const fields: SaluteField[] = [];
-  for (const part of parts) {
-    const m = part.match(/^([A-Za-z])\s*:\s*(.+)$/);
-    if (!m) return null;
-    const key = m[1].toUpperCase();
-    const label = SALUTE_LABELS[key];
-    if (!label) return null;
-    fields.push({ key, label, value: m[2].trim() });
-  }
-  return fields;
-}
+import SaluteFields from "./SaluteFields";
 
 export default function SpotFeed() {
   const events = useMapStore((s) => s.events);
@@ -70,7 +39,6 @@ export default function SpotFeed() {
       {sorted.map((e) => {
         const active = selection?.kind === "spot" && selection.id === e.id;
         const meta = reporterMeta(e.source);
-        const fields = parseSalute(e.salute);
         return (
           <button
             key={e.id}
@@ -99,22 +67,7 @@ export default function SpotFeed() {
               </span>
             </div>
 
-            {fields ? (
-              <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs leading-snug">
-                {fields.map((f) => (
-                  <div key={f.key} className="contents">
-                    <dt className="font-mono text-[10px] uppercase tracking-wider text-zinc-500">
-                      {f.label}
-                    </dt>
-                    <dd className="text-zinc-200">{f.value}</dd>
-                  </div>
-                ))}
-              </dl>
-            ) : (
-              <div className="whitespace-pre-wrap font-mono text-xs leading-snug text-zinc-200">
-                {e.salute}
-              </div>
-            )}
+            <SaluteFields salute={e.salute} />
 
             {e.quote && (
               <div className="border-l-2 border-cyan-400/50 pl-2 text-[11px] italic leading-snug text-zinc-400">

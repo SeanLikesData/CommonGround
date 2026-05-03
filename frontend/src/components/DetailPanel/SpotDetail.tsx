@@ -1,27 +1,43 @@
+import { reporterMeta } from "@/lib/reporters";
 import { severityColor } from "@/lib/symbology";
+import { formatDTG } from "@/lib/time";
 import type { SpotEvent } from "@/lib/types";
+import SaluteFields from "../SaluteFields";
 
 export default function SpotDetail({ spot }: { spot: SpotEvent }) {
+  const meta = reporterMeta(spot.source);
+  const sevColor = severityColor(spot.severity);
   return (
     <div className="flex flex-col gap-3 p-4">
       <div className="flex items-center gap-2">
         <span
           className="inline-block h-3 w-3 rounded-full"
-          style={{ backgroundColor: severityColor(spot.severity) }}
+          style={{ backgroundColor: sevColor }}
         />
+        <span className="text-base leading-none" style={{ color: sevColor }}>
+          {meta.glyph}
+        </span>
         <h2 className="text-sm font-semibold uppercase tracking-wider text-zinc-100">
-          SPOT — {spot.source.toUpperCase()}
+          SPOT — {meta.label}
           {spot.sensorId ? ` · ${spot.sensorId}` : ""}
         </h2>
+        <span
+          className="ml-auto rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider"
+          style={{ color: sevColor, borderColor: sevColor, borderWidth: 1 }}
+        >
+          {spot.severity}
+        </span>
+      </div>
+
+      <div className="font-mono text-[10px] uppercase tracking-wider text-zinc-500">
+        {formatDTG(spot.t)}
       </div>
 
       <div className="rounded border border-zinc-700/70 bg-zinc-950/60 p-3">
-        <div className="mb-1 text-[10px] uppercase tracking-wider text-zinc-500">
+        <div className="mb-2 text-[10px] uppercase tracking-wider text-zinc-500">
           SALUTE
         </div>
-        <pre className="whitespace-pre-wrap font-mono text-xs leading-snug text-zinc-200">
-          {spot.salute}
-        </pre>
+        <SaluteFields salute={spot.salute} size="md" />
       </div>
 
       {spot.quote && (

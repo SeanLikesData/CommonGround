@@ -3,6 +3,7 @@ import { reporterFromSensorId, reporterMeta } from "@/lib/reporters";
 import { severityColor } from "@/lib/symbology";
 import { formatDTG } from "@/lib/time";
 import type { SpotEvent } from "@/lib/types";
+import SaluteFields from "../SaluteFields";
 
 function SpotRow({ spot, onClick }: { spot: SpotEvent; onClick: () => void }) {
   const meta = reporterMeta(spot.source);
@@ -29,9 +30,8 @@ function SpotRow({ spot, onClick }: { spot: SpotEvent; onClick: () => void }) {
           {spot.severity}
         </span>
       </div>
-      <div className="text-xs leading-snug text-zinc-200">
-        {spot.salute}
-      </div>
+      <SaluteFields salute={spot.salute} />
+
       {spot.quote && (
         <div className="border-l-2 border-cyan-400/40 pl-2 text-[11px] italic leading-snug text-zinc-400">
           “{spot.quote}”
