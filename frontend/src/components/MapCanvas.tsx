@@ -48,8 +48,8 @@ interface DisplayState {
 
 // Lollipop fan rendered in pixel space so the spread stays readable at every
 // zoom level — at low zooms a fixed degree offset collapses to one pixel.
-const FAN_RADIUS_PX = 48;
-const FAN_STEP_DEG = 28;
+const FAN_RADIUS_PX = 84;
+const FAN_STEP_DEG = 32;
 
 function fanOffset(
   map: MapLibreMap,
