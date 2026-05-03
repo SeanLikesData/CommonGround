@@ -60,6 +60,7 @@ export default function MapCanvas() {
   const alerts = useMapStore((s) => s.alerts);
   const setSelection = useMapStore((s) => s.setSelection);
   const visibleLayers = useMapStore((s) => s.visibleLayers);
+  const chatOpen = useMapStore((s) => s.chatOpen);
   const markersRef = useRef<Map<string, maplibregl.Marker>>(new Map());
 
   useEffect(() => {
@@ -461,6 +462,14 @@ export default function MapCanvas() {
       }
     }
   }, [alerts, styleReady, setSelection]);
+
+  // Resize map when the agent panel toggles so MapLibre redraws to the new width.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !styleReady) return;
+    const id = window.setTimeout(() => map.resize(), 320);
+    return () => window.clearTimeout(id);
+  }, [chatOpen, styleReady]);
 
   // Layer visibility.
   useEffect(() => {

@@ -27,9 +27,10 @@ function craftProposal(text: string, kind: MemoryKind): string {
   }
 }
 
-export default function ChatDrawer() {
+export default function AgentPanel() {
   const open = useMapStore((s) => s.chatOpen);
   const prefill = useMapStore((s) => s.chatPrefill);
+  const openChat = useMapStore((s) => s.openChat);
   const closeChat = useMapStore((s) => s.closeChat);
   const addMemory = useMapStore((s) => s.addMemory);
 
@@ -39,13 +40,10 @@ export default function ChatDrawer() {
 
   useEffect(() => {
     if (open) {
-      setInput(prefill);
-      setStep({ kind: "idle" });
+      if (prefill) setInput(prefill);
       setTimeout(() => inputRef.current?.focus(), 50);
     }
   }, [open, prefill]);
-
-  if (!open) return null;
 
   const submit = () => {
     if (!input.trim()) return;
@@ -73,32 +71,58 @@ export default function ChatDrawer() {
     });
     setInput("");
     setStep({ kind: "idle" });
-    closeChat();
   };
 
+  if (!open) {
+    return (
+      <button
+        onClick={() => openChat()}
+        title="Open agent"
+        className="flex h-full w-12 flex-col items-center gap-3 border-l border-zinc-800 bg-zinc-900/95 py-4 text-zinc-400 transition-colors hover:bg-zinc-800/80 hover:text-zinc-100"
+      >
+        <span className="text-base leading-none">‹</span>
+        <span
+          className="text-[10px] font-semibold uppercase tracking-[0.2em]"
+          style={{ writingMode: "vertical-rl" }}
+        >
+          Agent
+        </span>
+        <span className="mt-auto inline-block h-2 w-2 rounded-full bg-emerald-400" />
+      </button>
+    );
+  }
+
   return (
-    <div className="pointer-events-auto absolute inset-x-0 bottom-0 z-50 border-t border-zinc-700/70 bg-zinc-900/95 shadow-2xl backdrop-blur">
-      <div className="mx-auto flex max-w-3xl flex-col gap-3 px-4 py-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-zinc-300">
-            <span className="inline-block h-2 w-2 rounded-full bg-emerald-400" />
-            Analyst chat — live
-            <span className="ml-1 rounded bg-amber-500/20 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wider text-amber-300">
-              stub
-            </span>
-          </div>
-          <button
-            onClick={closeChat}
-            className="rounded px-2 py-0.5 text-xs text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
-          >
-            ✕
-          </button>
+    <aside className="flex h-full w-96 flex-col border-l border-zinc-800 bg-zinc-900/95 backdrop-blur">
+      <header className="flex items-center justify-between border-b border-zinc-800 px-4 py-3">
+        <div className="flex items-center gap-2">
+          <span className="inline-block h-2 w-2 rounded-full bg-emerald-400" />
+          <span className="text-xs font-semibold uppercase tracking-wider text-zinc-200">
+            Agent
+          </span>
+          <span className="rounded bg-amber-500/20 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wider text-amber-300">
+            stub
+          </span>
+        </div>
+        <button
+          onClick={closeChat}
+          title="Collapse"
+          className="rounded px-2 py-0.5 text-sm text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
+        >
+          ›
+        </button>
+      </header>
+
+      <div className="flex flex-1 flex-col gap-3 overflow-y-auto p-4">
+        <div className="rounded border border-zinc-800 bg-zinc-950/60 p-3 text-xs leading-relaxed text-zinc-400">
+          Ask a question about the AO, correct an inference, or capture a rule
+          for the agent to remember. Confirmed entries are written to memory.
         </div>
 
         {step.kind === "proposed" && (
           <div className="rounded border border-fuchsia-500/40 bg-fuchsia-500/5 p-3">
             <div className="mb-1 text-[10px] uppercase tracking-wider text-fuchsia-300">
-              Proposed memory entry · {step.memoryKind.replace("_", " ")}
+              Proposed memory · {step.memoryKind.replace("_", " ")}
             </div>
             <div className="text-sm text-zinc-100">{step.proposalText}</div>
             <div className="mt-3 flex gap-2">
@@ -106,7 +130,7 @@ export default function ChatDrawer() {
                 onClick={confirm}
                 className="rounded bg-fuchsia-500/30 px-3 py-1 text-xs font-medium text-fuchsia-100 hover:bg-fuchsia-500/50"
               >
-                Confirm — write to memory
+                Save to memory
               </button>
               <button
                 onClick={() => setStep({ kind: "idle" })}
@@ -123,31 +147,33 @@ export default function ChatDrawer() {
             <span className="animate-pulse">Agent is thinking…</span>
           </div>
         )}
+      </div>
 
-        <div className="flex items-end gap-2">
-          <textarea
-            ref={inputRef}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                submit();
-              }
-            }}
-            placeholder="Correct the agent or add a rule, prior, or reasoning example…"
-            rows={2}
-            className="flex-1 resize-none rounded border border-zinc-700/70 bg-zinc-950/60 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-cyan-400/60 focus:outline-none"
-          />
+      <div className="border-t border-zinc-800 p-3">
+        <textarea
+          ref={inputRef}
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              submit();
+            }
+          }}
+          placeholder="Ask the agent or add a rule, prior, or example…"
+          rows={3}
+          className="w-full resize-none rounded border border-zinc-700/70 bg-zinc-950/60 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-cyan-400/60 focus:outline-none"
+        />
+        <div className="mt-2 flex justify-end">
           <button
             onClick={submit}
             disabled={!input.trim() || step.kind === "thinking"}
-            className="rounded bg-cyan-500/30 px-4 py-2 text-sm font-medium text-cyan-100 hover:bg-cyan-500/50 disabled:cursor-not-allowed disabled:opacity-40"
+            className="rounded bg-cyan-500/30 px-4 py-1.5 text-sm font-medium text-cyan-100 hover:bg-cyan-500/50 disabled:cursor-not-allowed disabled:opacity-40"
           >
             Send
           </button>
         </div>
       </div>
-    </div>
+    </aside>
   );
 }
