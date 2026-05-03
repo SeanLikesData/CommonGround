@@ -1,13 +1,15 @@
+import asyncio
 import json
 import logging
 import os
 import re
+from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 
 import httpx
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from pydantic_ai import Agent
 
 from agent import MODEL
@@ -140,7 +142,7 @@ app = FastAPI(title="CommonGround Agent")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
-    allow_methods=["GET", "POST"],
+    allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )
 
@@ -155,6 +157,141 @@ async def ask(req: AskRequest) -> AskResponse:
     log.info("ask: %s", req.question)
     result = await get_qa_agent().run(req.question)
     return AskResponse(answer=result.output)
+
+
+SITREP_SYSTEM_PROMPT = """You are an intelligence analyst writing a SITREP (situation report) for a battlespace operations cell.
+
+Output a structured SITREP in markdown with EXACTLY these sections, in this order:
+
+## SITREP — As of {as_of}
+**BLUF:** one-sentence bottom-line-up-front (under 25 words).
+
+### 1. Enemy Situation
+2-5 bullets covering current enemy activity, drawn from the alerts and SPOT reports below. Cite alert IDs or geohashes inline as `[geohash]`. Note multi-modal corroboration where present.
+
+### 2. Friendly Situation
+1-3 bullets on sensor coverage / collection posture. Sensor silence does NOT mean degraded coverage — these sensors are event-driven. Only flag a coverage gap if the data clearly shows one.
+
+### 3. Logistics & Sustainment
+One bullet, or "No change." This system has no logistics feed; only mention if explicitly in the inputs.
+
+### 4. Commander's Assessment
+2-4 bullets. What pattern is forming? What is the most likely enemy course of action over the next reporting period? Reference durable analyst memories where they apply.
+
+### 5. Recommendations
+2-4 numbered actions for the operator. Each should be specific (e.g. "Reposition drone orbit to cover [geohash]") and tied to evidence above.
+
+WRITING STYLE:
+- Plain language. No jargon beyond SALUTE, SPOT, SITREP, RF, UGS.
+- Refer to locations by 3-decimal lat/lon or short descriptor; geohash only as a tag in brackets.
+- Quantify ("4 reports in 12 min") rather than vague ("recent activity").
+- Hard cap: 350 words total across all sections.
+- No preamble, no closing remarks. Just the SITREP.
+"""
+
+
+SITREP_USER_TEMPLATE = """Reporting window: last {window_minutes} minutes (since {since_iso}).
+
+=== ALERTS (correlated, multi-modal) ===
+{alerts_block}
+
+=== SPOT REPORTS (raw observations, SALUTE format) ===
+{reports_block}
+
+=== DURABLE ANALYST MEMORIES ===
+{memories_block}
+
+Write the SITREP now."""
+
+
+class SitrepRequest(BaseModel):
+    window_minutes: int = Field(60, ge=5, le=1440)
+
+
+class SitrepResponse(BaseModel):
+    sitrep: str
+    as_of: str
+    window_minutes: int
+    report_count: int
+    alert_count: int
+
+
+def _format_alert(a: dict) -> str:
+    geohash = a.get("geohash", "?")
+    sev = a.get("severity", "?")
+    summary = a.get("summary", "").strip()
+    modalities = ",".join(a.get("modalities") or [])
+    n = a.get("report_count", 0)
+    reasoning = (a.get("reasoning") or "").strip()
+    line = f"- [{geohash}] sev={sev} mods={modalities} n={n}: {summary}"
+    if reasoning:
+        line += f"\n  reasoning: {reasoning}"
+    return line
+
+
+def _format_report(r: dict) -> str:
+    sp = r.get("spot_report") or {}
+    sig = r.get("signal") or {}
+    loc = sig.get("location") or sig.get("coordinates") or {}
+    lat = loc.get("lat")
+    lon = loc.get("lon")
+    coord = f"{lat:.3f},{lon:.3f}" if isinstance(lat, (int, float)) and isinstance(lon, (int, float)) else "?"
+    parts = []
+    if sp.get("size"): parts.append(f"S:{sp['size']}")
+    if sp.get("activity"): parts.append(f"A:{sp['activity']}")
+    if sp.get("unit"): parts.append(f"U:{sp['unit']}")
+    if sp.get("equipment"): parts.append(f"E:{sp['equipment']}")
+    salute = "; ".join(parts) or sp.get("narrative", "").strip()[:120]
+    threat = sp.get("threat_level", "?")
+    ts = sig.get("timestamp", "?")
+    return f"- [{r.get('modality', '?')}] {ts} ({coord}) threat={threat} | {salute}"
+
+
+@app.post("/sitrep", response_model=SitrepResponse)
+async def sitrep(req: SitrepRequest) -> SitrepResponse:
+    log.info("sitrep: window=%dm", req.window_minutes)
+    now = datetime.now(timezone.utc)
+    since = now - timedelta(minutes=req.window_minutes)
+    since_iso = since.isoformat(timespec="seconds").replace("+00:00", "Z")
+
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            reports_r, alerts_r = await asyncio.gather(
+                client.get(f"{API_URL}/reports", params={"since": since_iso, "limit": 200}),
+                client.get(f"{API_URL}/alerts", params={"since": since_iso, "limit": 100}),
+            )
+        reports_r.raise_for_status()
+        alerts_r.raise_for_status()
+    except Exception as e:
+        log.exception("sitrep: failed to fetch upstream data")
+        raise HTTPException(status_code=502, detail=f"upstream fetch failed: {e}")
+
+    reports = reports_r.json()
+    alerts = alerts_r.json()
+
+    alerts_block = "\n".join(_format_alert(a) for a in alerts) or "(no alerts in window)"
+    reports_block = "\n".join(_format_report(r) for r in reports[:50]) or "(no reports in window)"
+    memories_block = read_memories().strip() or "(empty)"
+
+    as_of = now.isoformat(timespec="seconds").replace("+00:00", "Z")
+    system_prompt = SITREP_SYSTEM_PROMPT.format(as_of=as_of)
+    user_prompt = SITREP_USER_TEMPLATE.format(
+        window_minutes=req.window_minutes,
+        since_iso=since_iso,
+        alerts_block=alerts_block,
+        reports_block=reports_block,
+        memories_block=memories_block,
+    )
+
+    sitrep_agent: Agent = Agent(MODEL, system_prompt=system_prompt)
+    result = await sitrep_agent.run(user_prompt)
+    return SitrepResponse(
+        sitrep=result.output,
+        as_of=as_of,
+        window_minutes=req.window_minutes,
+        report_count=len(reports),
+        alert_count=len(alerts),
+    )
 
 
 GRAPH_QUERY = """

@@ -44,6 +44,7 @@ interface MapState {
   visibleLayers: Set<LayerId>;
   chatOpen: boolean;
   chatPrefill: string;
+  sitrepOpen: boolean;
   leftPanel: LeftPanelId | null;
   leftPanelWidth: number;
   autoFlyToAlerts: boolean;
@@ -64,6 +65,8 @@ interface MapState {
   toggleLayer: (id: LayerId) => void;
   openChat: (prefill?: string) => void;
   closeChat: () => void;
+  openSitrep: () => void;
+  closeSitrep: () => void;
   toggleLeftPanel: (id: LeftPanelId) => void;
   closeLeftPanel: () => void;
   setLeftPanelWidth: (w: number) => void;
@@ -96,6 +99,7 @@ export const useMapStore = create<MapState>((set) => ({
   visibleLayers: new Set(ALL_LAYERS),
   chatOpen: false,
   chatPrefill: "",
+  sitrepOpen: false,
   leftPanel: "alerts",
   leftPanelWidth: DEFAULT_LEFT_PANEL_WIDTH,
   autoFlyToAlerts: true,
@@ -127,6 +131,8 @@ export const useMapStore = create<MapState>((set) => ({
     }),
   openChat: (prefill = "") => set({ chatOpen: true, chatPrefill: prefill }),
   closeChat: () => set({ chatOpen: false, chatPrefill: "" }),
+  openSitrep: () => set({ sitrepOpen: true }),
+  closeSitrep: () => set({ sitrepOpen: false }),
   toggleLeftPanel: (id) =>
     set((st) => ({ leftPanel: st.leftPanel === id ? null : id })),
   closeLeftPanel: () => set({ leftPanel: null }),
