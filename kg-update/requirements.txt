@@ -1,2 +1,4 @@
 pymongo==4.12.1
 neo4j==5.28.1
+graphiti-core[anthropic]>=0.10.0
+pygeohash==1.2.0
