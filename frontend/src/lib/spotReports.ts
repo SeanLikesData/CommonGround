@@ -117,10 +117,15 @@ export async function fetchSpotReports(since?: Date): Promise<SpotEvent[]> {
   if (since) url.searchParams.set("since", since.toISOString());
   const reports = await fetchJson<ApiReport[]>(url.toString());
   const events: SpotEvent[] = [];
+  let dropped = 0;
   for (const r of reports) {
     const e = mapReport(r);
     if (e) events.push(e);
+    else dropped += 1;
   }
+  console.log(
+    `[fetchSpotReports] url=${url.toString()} raw=${reports.length} mapped=${events.length} dropped=${dropped}`,
+  );
   return events;
 }
 

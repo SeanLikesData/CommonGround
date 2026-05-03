@@ -16,10 +16,6 @@ export function useLiveSeed() {
 
     const ingestSpots = async () => {
       try {
-        // Always fetch the latest 500 (no `since`) and dedupe by id.
-        // Trying to incrementally fetch by timestamp is brittle: report-gen
-        // writes reports out of order w.r.t. signal.timestamp, and clock skew
-        // between client/server can also drop new rows. Dedupe is cheap.
         const spots = await fetchSpotReports();
         if (cancelled) return;
         const state = useMapStore.getState();
@@ -31,11 +27,11 @@ export function useLiveSeed() {
             added += 1;
           }
         }
-        if (added > 0) {
-          console.debug(`[useLiveSeed] +${added} new spot reports`);
-        }
+        console.log(
+          `[useLiveSeed] poll fetched=${spots.length} new=${added} total=${state.events.length + added}`,
+        );
       } catch (err) {
-        console.error("spot-report poll error", err);
+        console.error("[useLiveSeed] poll error", err);
       }
     };
 
