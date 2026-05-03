@@ -188,9 +188,9 @@
       "type": "Feature",
       "properties": {
         "feature_type": "sensor",
-        "sensor_type": "trail_cam",
-        "label": "TC-1",
-        "note": "trail cam on inferred patrol loop, west leg",
+        "sensor_type": "i_ugs",
+        "label": "IUGS-1",
+        "note": "I-UGS on inferred patrol loop, west leg",
         "style_class": "synthetic_overlay"
       },
       "geometry": {
@@ -202,9 +202,9 @@
       "type": "Feature",
       "properties": {
         "feature_type": "sensor",
-        "sensor_type": "trail_cam",
-        "label": "TC-2",
-        "note": "trail cam on inferred patrol loop, north leg",
+        "sensor_type": "i_ugs",
+        "label": "IUGS-2",
+        "note": "I-UGS on inferred patrol loop, north leg",
         "style_class": "synthetic_overlay"
       },
       "geometry": {
@@ -216,9 +216,9 @@
       "type": "Feature",
       "properties": {
         "feature_type": "sensor",
-        "sensor_type": "trail_cam",
-        "label": "TC-3",
-        "note": "trail cam on inferred patrol loop, NAI-12 vicinity (Scenario 2 primary reporter)",
+        "sensor_type": "i_ugs",
+        "label": "IUGS-3",
+        "note": "I-UGS on inferred patrol loop, NAI-12 vicinity (Scenario 2 primary reporter)",
         "style_class": "synthetic_overlay"
       },
       "geometry": {

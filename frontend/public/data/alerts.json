@@ -27,6 +27,6 @@
     "summary": "Probable patrol loop detected — staging compound inferred",
     "contributingSpotIds": ["spot-db-011", "spot-db-021", "spot-db-029"],
     "citedMemoryIds": ["mem-db-003"],
-    "reasoning": "Three consecutive daily passes through TC-3 in NAI-12 vicinity, same bearing, same time window, with rotating personnel. Geometry consistent with a patrol cycle originating from a fixed staging point at the loop centroid."
+    "reasoning": "Three consecutive daily passes through IUGS-3 in NAI-12 vicinity, same bearing, same time window, with rotating personnel. Geometry consistent with a patrol cycle originating from a fixed staging point at the loop centroid."
   }
 ]

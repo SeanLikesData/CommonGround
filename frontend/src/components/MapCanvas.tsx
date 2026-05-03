@@ -37,7 +37,7 @@ function maxSeverity(a: Severity, b: Severity): Severity {
 interface SensorIndex {
   labels: Set<string>;
   coords: Map<string, [number, number]>;
-  isTrailCam: Set<string>;
+  isIUgs: Set<string>;
 }
 
 interface HotSensor {
@@ -205,7 +205,7 @@ export default function MapCanvas() {
   const [sensorIndex, setSensorIndex] = useState<SensorIndex>({
     labels: new Set(),
     coords: new Map(),
-    isTrailCam: new Set(),
+    isIUgs: new Set(),
   });
   // Bumped on every map "move" so lollipop offsets recompute against the
   // current pixel-space projection (zoom, pan, pitch all change it).
@@ -262,7 +262,7 @@ export default function MapCanvas() {
 
         const labels = new Set<string>();
         const coords = new Map<string, [number, number]>();
-        const isTrailCam = new Set<string>();
+        const isIUgs = new Set<string>();
         for (const f of geojson.features as GeoJSON.Feature[]) {
           const p = (f.properties ?? {}) as Record<string, unknown>;
           if (p.feature_type !== "sensor") continue;
@@ -270,9 +270,9 @@ export default function MapCanvas() {
           if (!label || f.geometry?.type !== "Point") continue;
           labels.add(label);
           coords.set(label, (f.geometry as GeoJSON.Point).coordinates as [number, number]);
-          if (p.sensor_type === "trail_cam") isTrailCam.add(label);
+          if (p.sensor_type === "i_ugs") isIUgs.add(label);
         }
-        setSensorIndex({ labels, coords, isTrailCam });
+        setSensorIndex({ labels, coords, isIUgs });
 
         map.addLayer({
           id: "wadi-line",
@@ -353,7 +353,7 @@ export default function MapCanvas() {
           filter: [
             "all",
             ["==", ["get", "feature_type"], "sensor"],
-            ["!=", ["get", "sensor_type"], "trail_cam"],
+            ["!=", ["get", "sensor_type"], "i_ugs"],
           ],
           paint: {
             "circle-radius": 6,
@@ -364,18 +364,18 @@ export default function MapCanvas() {
         });
 
         map.addLayer({
-          id: "trail-cams",
+          id: "i-ugs-sensors",
           type: "circle",
           source: "ao",
           filter: [
             "all",
             ["==", ["get", "feature_type"], "sensor"],
-            ["==", ["get", "sensor_type"], "trail_cam"],
+            ["==", ["get", "sensor_type"], "i_ugs"],
           ],
           paint: {
             "circle-radius": 5,
             "circle-color": "#0f172a",
-            "circle-stroke-color": layerColors.trailCam,
+            "circle-stroke-color": layerColors.iUgs,
             "circle-stroke-width": 2,
           },
         });
@@ -556,7 +556,7 @@ export default function MapCanvas() {
             if (id) setSelection({ kind: "spot", id });
           });
         }
-        for (const layerId of ["sensors", "trail-cams"]) {
+        for (const layerId of ["sensors", "i-ugs-sensors"]) {
           map.on("click", layerId, (e) => {
             const f = e.features?.[0];
             if (!f) return;
@@ -565,7 +565,7 @@ export default function MapCanvas() {
           });
         }
 
-        for (const id of ["spots-layer", "spots-halo", "sensors", "trail-cams"]) {
+        for (const id of ["spots-layer", "spots-halo", "sensors", "i-ugs-sensors"]) {
           map.on("mouseenter", id, () => (map.getCanvas().style.cursor = "pointer"));
           map.on("mouseleave", id, () => (map.getCanvas().style.cursor = ""));
         }
@@ -663,24 +663,24 @@ export default function MapCanvas() {
       map.setPaintProperty(
         "sensors",
         "circle-stroke-color",
-        buildStrokeColor(layerColors.sensor, (l) => !sensorIndex.isTrailCam.has(l)),
+        buildStrokeColor(layerColors.sensor, (l) => !sensorIndex.isIUgs.has(l)),
       );
       map.setPaintProperty(
         "sensors",
         "circle-stroke-width",
-        buildStrokeWidth(2, (l) => !sensorIndex.isTrailCam.has(l)),
+        buildStrokeWidth(2, (l) => !sensorIndex.isIUgs.has(l)),
       );
     }
-    if (map.getLayer("trail-cams")) {
+    if (map.getLayer("i-ugs-sensors")) {
       map.setPaintProperty(
-        "trail-cams",
+        "i-ugs-sensors",
         "circle-stroke-color",
-        buildStrokeColor(layerColors.trailCam, (l) => sensorIndex.isTrailCam.has(l)),
+        buildStrokeColor(layerColors.iUgs, (l) => sensorIndex.isIUgs.has(l)),
       );
       map.setPaintProperty(
-        "trail-cams",
+        "i-ugs-sensors",
         "circle-stroke-width",
-        buildStrokeWidth(2, (l) => sensorIndex.isTrailCam.has(l)),
+        buildStrokeWidth(2, (l) => sensorIndex.isIUgs.has(l)),
       );
     }
 
@@ -798,7 +798,7 @@ export default function MapCanvas() {
       map.setLayoutProperty(id, "visibility", visible ? "visible" : "none");
     };
     setVis("sensors", visibleLayers.has("sensors"));
-    setVis("trail-cams", visibleLayers.has("sensors"));
+    setVis("i-ugs-sensors", visibleLayers.has("sensors"));
     setVis("nai-fill", visibleLayers.has("nais"));
     setVis("nai-line", visibleLayers.has("nais"));
     setVis("drone-orbit", visibleLayers.has("drone-orbit"));

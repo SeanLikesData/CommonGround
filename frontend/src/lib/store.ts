@@ -24,7 +24,7 @@ export const ALL_SOURCES: SpotSource[] = [
   "rf",
   "drone",
   "human",
-  "trail-cam",
+  "i-ugs",
 ];
 
 const DEFAULT_LEFT_PANEL_WIDTH = 320;

@@ -11,7 +11,7 @@ export const REPORTERS: ReporterMeta[] = [
   { source: "ugs", glyph: "▲", label: "UGS" },
   { source: "rf", glyph: "◆", label: "RF" },
   { source: "human", glyph: "★", label: "Human" },
-  { source: "trail-cam", glyph: "■", label: "Trail cam" },
+  { source: "i-ugs", glyph: "■", label: "I-UGS" },
 ];
 
 const BY_SOURCE = new Map(REPORTERS.map((r) => [r.source, r]));
@@ -24,9 +24,9 @@ export function reporterMeta(source: SpotSource): ReporterMeta {
 // SPOTs have come in for the sensor yet so we can't read it off `source`).
 export function reporterFromSensorId(id: string): SpotSource {
   const upper = id.toUpperCase();
+  if (upper.startsWith("IUGS")) return "i-ugs";
   if (upper.startsWith("UGS")) return "ugs";
   if (upper.startsWith("RF")) return "rf";
-  if (upper.startsWith("TC")) return "trail-cam";
   if (upper.startsWith("UAS") || upper.startsWith("DRONE")) return "drone";
   return "human";
 }

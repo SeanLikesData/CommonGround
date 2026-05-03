@@ -4,9 +4,9 @@
     "t": 1800,
     "location": [44.312, 34.418],
     "severity": "low",
-    "source": "trail-cam",
-    "sensorId": "TC-1",
-    "salute": "S: 1 dismount; A: walking E along game trail; L: TC-1 (W ridge); U: civilian dress; T: 00:30Z; E: routine foot traffic",
+    "source": "i-ugs",
+    "sensorId": "IUGS-1",
+    "salute": "S: 1 dismount; A: walking E along game trail; L: IUGS-1 (W ridge); U: civilian dress; T: 00:30Z; E: routine foot traffic",
     "quote": "Lone shepherd, no weapons visible."
   },
   {
@@ -34,9 +34,9 @@
     "t": 14400,
     "location": [44.355, 34.443],
     "severity": "low",
-    "source": "trail-cam",
-    "sensorId": "TC-2",
-    "salute": "S: ~12 head livestock; A: grazing; L: TC-2 (S basin); U: N/A; T: 04:00Z; E: routine herd movement",
+    "source": "i-ugs",
+    "sensorId": "IUGS-2",
+    "salute": "S: ~12 head livestock; A: grazing; L: IUGS-2 (S basin); U: N/A; T: 04:00Z; E: routine herd movement",
     "quote": "Goat herd with one shepherd."
   },
   {
@@ -103,9 +103,9 @@
     "t": 22320,
     "location": [44.425, 34.483],
     "severity": "low",
-    "source": "trail-cam",
-    "sensorId": "TC-3",
-    "salute": "S: 4 dismounts; A: foot patrol bearing 045; L: TC-3 (NAI-12 vicinity); U: civilian dress; T: 06:12Z; E: passing through",
+    "source": "i-ugs",
+    "sensorId": "IUGS-3",
+    "salute": "S: 4 dismounts; A: foot patrol bearing 045; L: IUGS-3 (NAI-12 vicinity); U: civilian dress; T: 06:12Z; E: passing through",
     "quote": "Group of four moving NE, no visible weapons."
   },
   {
@@ -132,9 +132,9 @@
     "t": 32400,
     "location": [44.371, 34.467],
     "severity": "low",
-    "source": "trail-cam",
-    "sensorId": "TC-4",
-    "salute": "S: 0; A: wildlife trigger; L: TC-4; U: jackal; T: 09:00Z; E: false-positive on motion",
+    "source": "i-ugs",
+    "sensorId": "IUGS-4",
+    "salute": "S: 0; A: wildlife trigger; L: IUGS-4; U: jackal; T: 09:00Z; E: false-positive on motion",
     "quote": "Animal trigger, no human activity."
   },
   {
@@ -201,9 +201,9 @@
     "t": 108720,
     "location": [44.425, 34.483],
     "severity": "low",
-    "source": "trail-cam",
-    "sensorId": "TC-3",
-    "salute": "S: 5 dismounts; A: foot patrol bearing 045; L: TC-3 (NAI-12 vicinity); U: civilian dress; T: 06:12Z (D2); E: passing through",
+    "source": "i-ugs",
+    "sensorId": "IUGS-3",
+    "salute": "S: 5 dismounts; A: foot patrol bearing 045; L: IUGS-3 (NAI-12 vicinity); U: civilian dress; T: 06:12Z (D2); E: passing through",
     "quote": "Different group, similar bearing, ~24h after the prior pass."
   },
   {
@@ -250,9 +250,9 @@
     "t": 144000,
     "location": [44.367, 34.439],
     "severity": "low",
-    "source": "trail-cam",
-    "sensorId": "TC-5",
-    "salute": "S: 1 vehicle; A: stopped on track; L: TC-5; U: civilian truck; T: 16:00Z (D2); E: occupants out, repairing tire",
+    "source": "i-ugs",
+    "sensorId": "IUGS-5",
+    "salute": "S: 1 vehicle; A: stopped on track; L: IUGS-5; U: civilian truck; T: 16:00Z (D2); E: occupants out, repairing tire",
     "quote": "Roadside repair, observed for 18 min then departed."
   },
   {
@@ -280,9 +280,9 @@
     "t": 195120,
     "location": [44.425, 34.483],
     "severity": "low",
-    "source": "trail-cam",
-    "sensorId": "TC-3",
-    "salute": "S: 4 dismounts; A: foot patrol bearing 045; L: TC-3 (NAI-12 vicinity); U: civilian dress; T: 06:12Z (D3); E: passing through",
+    "source": "i-ugs",
+    "sensorId": "IUGS-3",
+    "salute": "S: 4 dismounts; A: foot patrol bearing 045; L: IUGS-3 (NAI-12 vicinity); U: civilian dress; T: 06:12Z (D3); E: passing through",
     "quote": "Pattern continues — same window, same bearing."
   },
   {
@@ -319,9 +319,9 @@
     "t": 226800,
     "location": [44.392, 34.402],
     "severity": "low",
-    "source": "trail-cam",
-    "sensorId": "TC-2",
-    "salute": "S: 2 dismounts; A: foot movement S; L: TC-2; U: civilian dress; T: 15:00Z (D3); E: routine",
+    "source": "i-ugs",
+    "sensorId": "IUGS-2",
+    "salute": "S: 2 dismounts; A: foot movement S; L: IUGS-2; U: civilian dress; T: 15:00Z (D3); E: routine",
     "quote": "Two locals walking out of basin."
   },
   {
@@ -359,9 +359,9 @@
     "t": 281520,
     "location": [44.425, 34.483],
     "severity": "low",
-    "source": "trail-cam",
-    "sensorId": "TC-3",
-    "salute": "S: 4 dismounts; A: foot patrol bearing 045; L: TC-3 (NAI-12 vicinity); U: civilian dress; T: 06:12Z (D4); E: passing through",
+    "source": "i-ugs",
+    "sensorId": "IUGS-3",
+    "salute": "S: 4 dismounts; A: foot patrol bearing 045; L: IUGS-3 (NAI-12 vicinity); U: civilian dress; T: 06:12Z (D4); E: passing through",
     "quote": "Fourth consecutive day, same pattern."
   },
   {
@@ -417,9 +417,9 @@
     "t": 338400,
     "location": [44.368, 34.428],
     "severity": "low",
-    "source": "trail-cam",
-    "sensorId": "TC-2",
-    "salute": "S: 1 dismount; A: foot movement E; L: TC-2; U: civilian dress; T: 22:00Z (D4); E: night activity",
+    "source": "i-ugs",
+    "sensorId": "IUGS-2",
+    "salute": "S: 1 dismount; A: foot movement E; L: IUGS-2; U: civilian dress; T: 22:00Z (D4); E: night activity",
     "quote": "Single person walking, low confidence on intent."
   },
   {
@@ -447,9 +447,9 @@
     "t": 367920,
     "location": [44.425, 34.483],
     "severity": "low",
-    "source": "trail-cam",
-    "sensorId": "TC-3",
-    "salute": "S: 4 dismounts; A: foot patrol bearing 045; L: TC-3 (NAI-12 vicinity); U: civilian dress; T: 06:12Z (D5); E: passing through",
+    "source": "i-ugs",
+    "sensorId": "IUGS-3",
+    "salute": "S: 4 dismounts; A: foot patrol bearing 045; L: IUGS-3 (NAI-12 vicinity); U: civilian dress; T: 06:12Z (D5); E: passing through",
     "quote": "Fifth-day repeat — pattern locked."
   },
   {

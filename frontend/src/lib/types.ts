@@ -1,6 +1,6 @@
 import type { Severity } from "./symbology";
 
-export type SpotSource = "ugs" | "rf" | "drone" | "human" | "trail-cam";
+export type SpotSource = "ugs" | "rf" | "drone" | "human" | "i-ugs";
 
 export interface SpotEvent {
   id: string;
