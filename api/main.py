@@ -27,11 +27,14 @@ client = MongoClient(MONGO_URI)
 db = client["commonground"]
 
 
-def serialize(doc: dict) -> dict:
-    out = dict(doc)
-    if "_id" in out and isinstance(out["_id"], ObjectId):
-        out["_id"] = str(out["_id"])
-    return out
+def serialize(value):
+    if isinstance(value, ObjectId):
+        return str(value)
+    if isinstance(value, dict):
+        return {k: serialize(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [serialize(v) for v in value]
+    return value
 
 
 def fetch(col: Collection, since: Optional[datetime], limit: int) -> list[dict]:
