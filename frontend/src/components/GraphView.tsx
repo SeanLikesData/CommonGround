@@ -35,7 +35,6 @@ export default function GraphView() {
   const alerts = useMapStore((s) => s.alerts);
   const memory = useMapStore((s) => s.memory);
   const setSelection = useMapStore((s) => s.setSelection);
-  const setView = useMapStore((s) => s.setView);
 
   const { nodes, edges, height } = useMemo(() => {
     const n: Node[] = [];
@@ -114,24 +113,18 @@ export default function GraphView() {
 
   const onNodeClick = (n: Node) => {
     if (n.kind === "alert") {
-      setView("live");
       setSelection({ kind: "alert", id: n.id.slice(6) });
     } else if (n.kind === "spot") {
-      setView("live");
       setSelection({ kind: "spot", id: n.id.slice(5) });
     } else if (n.kind === "sensor") {
-      setView("live");
       setSelection({ kind: "sensor", id: n.id.slice(7) });
     }
   };
 
   return (
-    <div className="absolute inset-0 z-20 overflow-auto bg-zinc-950 pt-16 text-zinc-100">
-      <div className="sticky top-16 z-10 border-b border-zinc-800 bg-zinc-950/95 px-6 py-3 backdrop-blur">
-        <h1 className="text-lg font-semibold uppercase tracking-wider text-zinc-100">
-          Knowledge graph
-        </h1>
-        <p className="mt-0.5 text-xs text-zinc-400">
+    <div className="flex h-full flex-col text-zinc-100">
+      <div className="sticky top-0 z-10 border-b border-zinc-800 bg-zinc-950/95 px-4 py-3 backdrop-blur">
+        <p className="text-xs text-zinc-400">
           Schematic of the Neo4j store: memory ← alerts → SPOTs → sensors. Click a
           node to open its detail panel.
         </p>
@@ -150,7 +143,7 @@ export default function GraphView() {
         </div>
       </div>
 
-      <div className="px-6 pb-10 pt-4">
+      <div className="px-4 pb-10 pt-4">
         <svg
           width={COL.sensor + 200}
           height={height}

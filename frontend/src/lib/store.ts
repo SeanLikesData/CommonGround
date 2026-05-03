@@ -7,12 +7,18 @@ import type {
   SpotEvent,
 } from "./types";
 
-export type View = "live" | "graph" | "memory";
-export type LeftPanelId = "alerts" | "layers" | "settings";
+export type LeftPanelId =
+  | "alerts"
+  | "layers"
+  | "graph"
+  | "memory"
+  | "settings";
 export type SpotDisplayMode = "merge" | "offset" | "cluster";
 
+const DEFAULT_LEFT_PANEL_WIDTH = 320;
+export const MIN_LEFT_PANEL_WIDTH = 240;
+
 interface MapState {
-  view: View;
   events: SpotEvent[];
   alerts: AlertEvent[];
   memory: MemoryEntry[];
@@ -21,11 +27,11 @@ interface MapState {
   chatOpen: boolean;
   chatPrefill: string;
   leftPanel: LeftPanelId | null;
+  leftPanelWidth: number;
   autoFlyToAlerts: boolean;
   showWatermark: boolean;
   spotDisplayMode: SpotDisplayMode;
 
-  setView: (v: View) => void;
   addSpot: (e: SpotEvent) => void;
   addAlert: (a: AlertEvent) => void;
   addMemory: (m: MemoryEntry) => void;
@@ -35,6 +41,7 @@ interface MapState {
   closeChat: () => void;
   toggleLeftPanel: (id: LeftPanelId) => void;
   closeLeftPanel: () => void;
+  setLeftPanelWidth: (w: number) => void;
   setAutoFlyToAlerts: (v: boolean) => void;
   setShowWatermark: (v: boolean) => void;
   setSpotDisplayMode: (m: SpotDisplayMode) => void;
@@ -51,7 +58,6 @@ const ALL_LAYERS: LayerId[] = [
 ];
 
 export const useMapStore = create<MapState>((set) => ({
-  view: "live",
   events: [],
   alerts: [],
   memory: [],
@@ -60,11 +66,11 @@ export const useMapStore = create<MapState>((set) => ({
   chatOpen: false,
   chatPrefill: "",
   leftPanel: "alerts",
+  leftPanelWidth: DEFAULT_LEFT_PANEL_WIDTH,
   autoFlyToAlerts: true,
   showWatermark: true,
   spotDisplayMode: "merge",
 
-  setView: (v) => set({ view: v }),
   addSpot: (e) => set((st) => ({ events: [...st.events, e] })),
   addAlert: (a) => set((st) => ({ alerts: [...st.alerts, a] })),
   addMemory: (m) => set((st) => ({ memory: [...st.memory, m] })),
@@ -81,6 +87,8 @@ export const useMapStore = create<MapState>((set) => ({
   toggleLeftPanel: (id) =>
     set((st) => ({ leftPanel: st.leftPanel === id ? null : id })),
   closeLeftPanel: () => set({ leftPanel: null }),
+  setLeftPanelWidth: (w) =>
+    set({ leftPanelWidth: Math.max(MIN_LEFT_PANEL_WIDTH, w) }),
   setAutoFlyToAlerts: (v) => set({ autoFlyToAlerts: v }),
   setShowWatermark: (v) => set({ showWatermark: v }),
   setSpotDisplayMode: (m) => set({ spotDisplayMode: m }),

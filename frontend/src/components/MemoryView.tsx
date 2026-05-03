@@ -24,17 +24,12 @@ export default function MemoryView() {
   for (const m of memory) byKind[m.kind].push(m);
 
   return (
-    <div className="absolute inset-0 z-20 overflow-y-auto bg-zinc-950 px-6 pb-8 pt-20 text-zinc-100">
-      <div className="mx-auto flex max-w-4xl flex-col gap-6">
-        <div>
-          <h1 className="text-lg font-semibold uppercase tracking-wider text-zinc-100">
-            Memory
-          </h1>
-          <p className="mt-1 max-w-2xl text-sm text-zinc-400">
-            Rules, priors, and reasoning examples available to the analyst agent.
-            These ground every alert produced on the Live and Replay views.
-          </p>
-        </div>
+    <div className="px-4 pb-6 pt-3 text-zinc-100">
+      <div className="flex flex-col gap-4">
+        <p className="text-xs text-zinc-400">
+          Rules, priors, and reasoning examples available to the analyst agent.
+          These ground every alert produced on the live map.
+        </p>
 
         {memory.length === 0 ? (
           <div className="rounded border border-dashed border-zinc-800 px-6 py-12 text-center text-sm text-zinc-500">

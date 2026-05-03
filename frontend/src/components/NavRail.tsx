@@ -48,6 +48,48 @@ const ITEMS: RailItem[] = [
     ),
   },
   {
+    id: "graph",
+    label: "Graph",
+    icon: (
+      <svg
+        className={ICON_CLASS}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={1.7}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="6" cy="6" r="2.5" />
+        <circle cx="18" cy="6" r="2.5" />
+        <circle cx="12" cy="18" r="2.5" />
+        <path d="M7.6 7.7 10.6 16" />
+        <path d="M16.4 7.7 13.4 16" />
+        <path d="M8.5 6h7" />
+      </svg>
+    ),
+  },
+  {
+    id: "memory",
+    label: "Memory",
+    icon: (
+      <svg
+        className={ICON_CLASS}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={1.7}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M5 5h11l3 3v11a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z" />
+        <path d="M8 9h7" />
+        <path d="M8 13h7" />
+        <path d="M8 17h4" />
+      </svg>
+    ),
+  },
+  {
     id: "settings",
     label: "Settings",
     icon: (
