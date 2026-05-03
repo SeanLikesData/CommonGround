@@ -193,3 +193,62 @@ def graph(limit: int = Query(300, ge=1, le=1000)) -> dict:
         log.error("graph: query failed: %s", e)
         return {"nodes": [], "links": [], "error": str(e)}
     return {"nodes": list(nodes.values()), "links": links}
+
+
+NODE_DETAIL_QUERY = """
+MATCH (n) WHERE elementId(n) = $id
+OPTIONAL MATCH (n)-[r_out]->(m_out)
+WITH n, collect(DISTINCT {
+    direction: 'out',
+    type: type(r_out),
+    id: elementId(m_out),
+    label: head(labels(m_out)),
+    props: properties(m_out)
+}) AS outs
+OPTIONAL MATCH (m_in)-[r_in]->(n)
+WITH n, outs, collect(DISTINCT {
+    direction: 'in',
+    type: type(r_in),
+    id: elementId(m_in),
+    label: head(labels(m_in)),
+    props: properties(m_in)
+}) AS ins
+RETURN n,
+       elementId(n) AS n_id,
+       labels(n) AS n_labels,
+       [x IN outs WHERE x.id IS NOT NULL] AS outs,
+       [x IN ins WHERE x.id IS NOT NULL] AS ins
+"""
+
+
+@app.get("/graph/node")
+def graph_node(id: str = Query(...)) -> dict:
+    try:
+        with driver().session() as session:
+            record = session.run(NODE_DETAIL_QUERY, {"id": id}).single()
+    except Exception as e:
+        log.error("graph_node: query failed: %s", e)
+        return {"error": str(e)}
+    if record is None:
+        return {"error": "not found"}
+    labels = record["n_labels"]
+    neighbors = [
+        {
+            "direction": x["direction"],
+            "type": x["type"],
+            "node": {
+                "id": x["id"],
+                "label": x["label"] or "Node",
+                "props": serialize(dict(x["props"])),
+            },
+        }
+        for x in (list(record["outs"]) + list(record["ins"]))
+    ]
+    return {
+        "node": {
+            "id": record["n_id"],
+            "label": labels[0] if labels else "Node",
+            "props": serialize(dict(record["n"])),
+        },
+        "neighbors": neighbors,
+    }

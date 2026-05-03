@@ -245,6 +245,18 @@ export default function GraphView() {
   );
 }
 
+interface NeighborEntry {
+  direction: "in" | "out";
+  type: string;
+  node: { id: string; label: string; props: Record<string, unknown> };
+}
+
+interface NodeDetail {
+  node: { id: string; label: string; props: Record<string, unknown> };
+  neighbors: NeighborEntry[];
+  error?: string;
+}
+
 function DetailSidebar({
   node,
   onClose,
@@ -252,52 +264,174 @@ function DetailSidebar({
   node: GraphNode | null;
   onClose: () => void;
 }) {
+  const [detail, setDetail] = useState<NodeDetail | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!node) {
+      setDetail(null);
+      setErr(null);
+      return;
+    }
+    let cancelled = false;
+    setLoading(true);
+    setErr(null);
+    fetch(`${AGENT_URL}/graph/node?id=${encodeURIComponent(node.id)}`)
+      .then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json() as Promise<NodeDetail>;
+      })
+      .then((d) => {
+        if (cancelled) return;
+        if (d.error) throw new Error(d.error);
+        setDetail(d);
+      })
+      .catch((e) => {
+        if (!cancelled) setErr(e instanceof Error ? e.message : String(e));
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [node]);
+
   if (!node) {
     return (
-      <aside className="hidden w-72 flex-col border-l border-zinc-800 bg-zinc-900/60 p-4 text-xs text-zinc-500 md:flex">
-        Click a node to inspect its properties.
+      <aside className="hidden w-80 flex-col border-l border-zinc-800 bg-zinc-900/60 p-4 text-xs text-zinc-500 md:flex">
+        Click a node to inspect its properties and connections.
       </aside>
     );
   }
-  const entries = Object.entries(node.props);
+
+  const props = detail?.node.props ?? node.props;
+  const propEntries = Object.entries(props).filter(([k]) => k !== "point");
+  const neighbors = detail?.neighbors ?? [];
+
+  // Group neighbors by relationship type + direction for a tidy summary.
+  const groups = new Map<string, NeighborEntry[]>();
+  for (const n of neighbors) {
+    const key = `${n.direction}:${n.type}`;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key)!.push(n);
+  }
+
   return (
-    <aside className="flex w-72 flex-col border-l border-zinc-800 bg-zinc-900/95">
+    <aside className="flex w-80 flex-col border-l border-zinc-800 bg-zinc-900/95">
       <header className="flex items-center justify-between border-b border-zinc-800 px-4 py-3">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 min-w-0">
           <span
-            className="inline-block h-2.5 w-2.5 rounded-full"
+            className="inline-block h-2.5 w-2.5 shrink-0 rounded-full"
             style={{ background: colorFor(node.label) }}
           />
-          <span className="text-xs font-semibold uppercase tracking-wider text-zinc-200">
-            {node.label}
-          </span>
+          <div className="flex min-w-0 flex-col">
+            <span className="text-xs font-semibold uppercase tracking-wider text-zinc-200">
+              {node.label}
+            </span>
+            <span className="truncate text-[11px] text-zinc-400">
+              {displayName(node)}
+            </span>
+          </div>
         </div>
         <button
           onClick={onClose}
-          className="rounded px-2 py-0.5 text-sm text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
+          className="ml-2 shrink-0 rounded px-2 py-0.5 text-sm text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
         >
           ×
         </button>
       </header>
+
       <div className="flex-1 overflow-y-auto p-4">
         <div className="mb-3 break-all text-[10px] uppercase tracking-wider text-zinc-500">
           {node.id}
         </div>
-        {entries.length === 0 && (
-          <div className="text-xs text-zinc-500">No properties.</div>
-        )}
-        <dl className="flex flex-col gap-2 text-xs">
-          {entries.map(([k, v]) => (
-            <div key={k} className="flex flex-col gap-0.5">
-              <dt className="text-[10px] uppercase tracking-wider text-zinc-500">
-                {k}
-              </dt>
-              <dd className="break-words text-zinc-200">{formatValue(v)}</dd>
+
+        <Section title="Properties">
+          {propEntries.length === 0 ? (
+            <div className="text-xs text-zinc-500">None.</div>
+          ) : (
+            <dl className="flex flex-col gap-2 text-xs">
+              {propEntries.map(([k, v]) => (
+                <div key={k} className="flex flex-col gap-0.5">
+                  <dt className="text-[10px] uppercase tracking-wider text-zinc-500">
+                    {k}
+                  </dt>
+                  <dd className="break-words text-zinc-200">
+                    {formatValue(v)}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          )}
+        </Section>
+
+        <Section title={`Connections${neighbors.length ? ` (${neighbors.length})` : ""}`}>
+          {loading && (
+            <div className="text-xs text-zinc-500">Loading…</div>
+          )}
+          {err && (
+            <div className="rounded border border-red-500/40 bg-red-500/10 px-2 py-1 text-xs text-red-200">
+              {err}
             </div>
-          ))}
-        </dl>
+          )}
+          {!loading && !err && neighbors.length === 0 && (
+            <div className="text-xs text-zinc-500">No connections.</div>
+          )}
+          {[...groups.entries()].map(([key, items]) => {
+            const [direction, type] = key.split(":");
+            const arrow = direction === "out" ? "→" : "←";
+            return (
+              <div key={key} className="mb-3">
+                <div className="mb-1 text-[10px] uppercase tracking-wider text-zinc-500">
+                  {arrow} {type} ({items.length})
+                </div>
+                <ul className="flex flex-col gap-1">
+                  {items.slice(0, 12).map((it) => (
+                    <li
+                      key={`${key}:${it.node.id}`}
+                      className="flex items-center gap-2 rounded bg-zinc-950/60 px-2 py-1 text-xs"
+                    >
+                      <span
+                        className="inline-block h-2 w-2 shrink-0 rounded-full"
+                        style={{ background: colorFor(it.node.label) }}
+                      />
+                      <span className="text-zinc-500">{it.node.label}</span>
+                      <span className="truncate text-zinc-200">
+                        {displayName(it.node as GraphNode)}
+                      </span>
+                    </li>
+                  ))}
+                  {items.length > 12 && (
+                    <li className="text-[11px] text-zinc-500">
+                      +{items.length - 12} more
+                    </li>
+                  )}
+                </ul>
+              </div>
+            );
+          })}
+        </Section>
       </div>
     </aside>
+  );
+}
+
+function Section({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="mb-5">
+      <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.15em] text-zinc-400">
+        {title}
+      </div>
+      {children}
+    </div>
   );
 }
 
