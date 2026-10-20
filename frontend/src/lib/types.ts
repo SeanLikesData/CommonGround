@@ -22,6 +22,7 @@ export interface AlertEvent {
   summary: string;
   contributingSpotIds: string[];
   citedMemoryIds: string[];
+  citedMemories?: { id: string; timestamp: string; text: string }[];
   reasoning?: string;
 }
 

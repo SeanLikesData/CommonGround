@@ -144,6 +144,8 @@ interface ApiAlert {
   modalities?: string[];
   report_count?: number;
   contributing_report_ids?: string[];
+  cited_memory_ids?: string[];
+  cited_memories?: { id: string; timestamp: string; text: string }[];
   reasoning?: string | null;
   updated_at?: string;
   latest_report_at?: string | null;
@@ -170,7 +172,12 @@ function mapAlert(a: ApiAlert): AlertEvent | null {
     severity: ALERT_SEVERITY[a.severity ?? "low"] ?? "low",
     summary: a.summary ?? `${a.geohash}: alert`,
     contributingSpotIds: a.contributing_report_ids ?? [],
-    citedMemoryIds: [],
+    citedMemoryIds: (a.cited_memory_ids ?? []).filter((id) =>
+      a.cited_memories?.some((m) => m.id === id),
+    ),
+    citedMemories: (a.cited_memories ?? []).filter((m) =>
+      a.cited_memory_ids?.includes(m.id),
+    ),
     reasoning: a.reasoning ?? undefined,
   };
 }

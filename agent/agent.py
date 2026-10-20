@@ -1,8 +1,11 @@
 import os
+import json
+
+from pydantic import BaseModel, Field
 
 from pydantic_ai import Agent
 
-from memory import append_memory, read_memories
+from memory import append_memory
 
 MODEL = os.environ.get("AGENT_MODEL", "anthropic:claude-haiku-4-5")
 
@@ -20,6 +23,13 @@ Each cycle:
    thresholds, recurring patterns, dedup notes), call the remember tool.
    Be selective — memories accumulate.
 
+Return a sitrep plus one assessment for each alert geohash supplied in the input.
+For each alert, give its own reasoning and cite ONLY memory IDs from the prior
+memories that you actually applied to that region's assessment. Explain how the
+cited guidance applies in that reasoning. Merely seeing a memory is not using it.
+Use an empty cited_memory_ids list when no guidance applies. Never invent IDs,
+copy citations to unrelated regions, or cite newly remembered guidance.
+
 WRITING STYLE — STRICT:
 - Lead with a one-line BLUF (bottom line up front): what is happening and where, in plain English.
 - Then 2–5 short bullets, each under 15 words. One fact per bullet.
@@ -36,13 +46,23 @@ Prior memories (durable across cycles):
 """
 
 
-def build_agent() -> Agent:
-    agent: Agent = Agent(MODEL)
+class AlertAssessment(BaseModel):
+    geohash: str
+    reasoning: str
+    cited_memory_ids: list[str] = Field(default_factory=list)
+
+
+class Assessment(BaseModel):
+    sitrep: str
+    alerts: list[AlertAssessment] = Field(default_factory=list)
+
+
+def build_agent(memories: list[dict[str, str]]) -> Agent:
+    agent: Agent = Agent(MODEL, output_type=Assessment)
 
     @agent.system_prompt
     def with_memories() -> str:
-        memories = read_memories().strip() or "(empty)"
-        return SYSTEM_PROMPT_TEMPLATE.format(memories=memories)
+        return SYSTEM_PROMPT_TEMPLATE.format(memories=json.dumps(memories))
 
     @agent.tool_plain
     def remember(text: str) -> str:

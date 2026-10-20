@@ -125,14 +125,25 @@ def derive_alerts(heuristics: dict[str, list[dict]]) -> list[dict[str, Any]]:
     return list(by_geohash.values())
 
 
-def persist_alerts(alerts: list[dict[str, Any]], reasoning: Optional[str]) -> int:
+def persist_alerts(
+    alerts: list[dict[str, Any]], reasoning: Optional[str], *,
+    assessments=(), memories=(),
+) -> int:
     """Upsert alerts by geohash. Returns count written."""
     if not alerts:
         return 0
     col = _alerts()
     now = datetime.now(timezone.utc)
     written = 0
+    known = {m["id"]: m for m in memories}
     for a in alerts:
+        matches = [x for x in assessments if x.geohash == a["geohash"]]
+        # Ambiguous or missing regional assessments must not acquire citations.
+        assessment = matches[0] if len(matches) == 1 else None
+        ids = list(dict.fromkeys(
+            mid for mid in (assessment.cited_memory_ids if assessment else [])
+            if mid in known and assessment.reasoning.strip()
+        ))
         sev = _severity(a["report_count"], a["mods"])
         summary = _summary(
             a["geohash"],
@@ -152,7 +163,9 @@ def persist_alerts(alerts: list[dict[str, Any]], reasoning: Optional[str]) -> in
             "report_count": a["report_count"],
             "contributing_report_ids": a["report_ids"][:50],
             "triggers": a["sources"],
-            "reasoning": reasoning,
+            "reasoning": assessment.reasoning if assessment else reasoning,
+            "cited_memory_ids": ids,
+            "cited_memories": [known[mid] for mid in ids],
             "updated_at": now,
             "latest_report_at": a.get("latest"),
         }

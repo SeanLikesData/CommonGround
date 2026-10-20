@@ -116,3 +116,32 @@ Earlier, the agent flagged a similar repeating-vehicle pattern that turned out t
 - **Paired arc (1 + 2):** open with a short POL beat that surfaces the suspected staging compound, then run the real-time Wadi Hamrin fusion catching maneuver out of (or near) that same compound. Two timescales, one through-line. Higher production lift; only attempt if Scenario 1 is solid first.
 
 Recommended build order: Scenario 1 first as the working demo and fallback. If time allows, add a compressed Scenario 2 beat in front of it for the paired arc.
+
+
+### Live alert memory provenance
+
+Each assessment receives a snapshot of timestamped Markdown memories. Entries
+have deterministic SHA-256 IDs derived from their timestamp and full text;
+appending guidance preserves existing IDs, while editing guidance changes its ID.
+No migration or citation backfill is required for existing files or alerts.
+
+The agent returns per-region reasoning and explicit memory IDs. Persistence accepts
+only IDs present in that assessment's input snapshot and stores the referenced
+text and timestamp alongside the alert. This records the model's declared use of
+guidance, not an independent guarantee that its interpretation is correct. Merely
+loading a memory never creates a citation. New memories written during the run
+are eligible only in a later assessment. Report attribution remains heuristic-derived.
+
+The read API passes these fields through. Live alert details resolve only embedded
+cited snapshots, never static demo memories, and show text, timestamp, and ID.
+Older alerts display no memory citations. Cycles that skip assessment clear both
+reasoning and citations; changes to guidance trigger reassessment even if sensor
+heuristics have not changed. Failed assessments are retried next cycle.
+
+Regression checks (no running databases or model credentials required):
+
+```sh
+python -m unittest discover -s agent/tests -v
+node --test frontend/src/lib/spotReports.test.mjs
+pnpm --dir frontend build
+```
