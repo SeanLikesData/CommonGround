@@ -9,7 +9,7 @@ export default function AlertDetail({ alert }: { alert: AlertEvent }) {
   const openChat = useMapStore((s) => s.openChat);
 
   const contributing = events.filter((e) => alert.contributingSpotIds.includes(e.id));
-  const cited = memory.filter((m) => alert.citedMemoryIds.includes(m.id));
+  const cited = alert.citedMemories ?? memory.filter((m) => alert.citedMemoryIds.includes(m.id));
 
   return (
     <div className="flex flex-col gap-3 p-4">
@@ -84,9 +84,14 @@ export default function AlertDetail({ alert }: { alert: AlertEvent }) {
                 className="rounded border border-fuchsia-500/30 bg-fuchsia-500/5 px-2 py-1.5 text-xs"
               >
                 <span className="mr-2 inline-block rounded bg-fuchsia-500/20 px-1 py-0.5 font-mono text-[9px] uppercase tracking-wider text-fuchsia-200">
-                  {m.kind.replace("_", " ")}
+                  {"timestamp" in m ? "guidance" : m.kind.replace("_", " ")}
                 </span>
-                <span className="text-zinc-200">{m.text}</span>
+                <span className="whitespace-pre-line text-zinc-200">{m.text}</span>
+                {"timestamp" in m && (
+                  <div className="mt-1 break-all font-mono text-[10px] text-zinc-500">
+                    {m.id} · {m.timestamp}
+                  </div>
+                )}
               </div>
             ))}
           </div>
